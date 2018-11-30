@@ -69,7 +69,7 @@ def xmltree_bioclass_parser(acc, root):
 			break
 		# identify non-labeled pdb-entry
 		if child.tag == 'PDB-mol-id':
-			if acc[0:-2] == child.text:
+			if acc.startswith(child.text):
 				bioseq_class = 'pdb-entry'
 				break
 	logger.debug('Bioseq-set_class: '+ bioseq_class)
@@ -131,7 +131,7 @@ def xmltree_bioseq_parser(acc, root, bioseq_class):
 				logger.warning('Acc was not found in bioseq')
 
 			# *** Drop non-target bioseq to avoid too many results cause low mem crash ***
-			if bioseq_acc != acc.split('.',1)[0]:
+			if not acc.startswith(bioseq_acc):
 				bioseq.pop(bioseq_acc)
 				logger.info('Dropping non-target bioseq')
 				continue
