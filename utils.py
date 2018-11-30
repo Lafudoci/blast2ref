@@ -65,23 +65,23 @@ def hits_mesh_enrich(hits):
 				r_acc = acc.split('.')[0]	# There is no version in record dict
 				logger.info('Enriching '+ qid +' '+ acc)
 				record = eutility.acc2record(acc)
-				hits[qid][acc]['title'] = record.bioseq[r_acc]['title']
-				hits[qid][acc]['tax_id'] = record.source['tax_id']
-				hits[qid][acc]['tax_name'] = record.source['tax_name']
-				hits[qid][acc]['lineage'] = record.source['lineage']
+				hits[qid][acc]['title'] = record.bioseq.get(r_acc, {}).get('title','')
+				hits[qid][acc]['tax_id'] = record.source.get('tax_id','')
+				hits[qid][acc]['tax_name'] = record.source.get('tax_name','')
+				hits[qid][acc]['lineage'] = record.source.get('lineage','')
 				hits[qid][acc]['pubmed'] = record.pmid_list
-				hits[qid][acc]['mesh_major'] = record.mesh['major']
-				hits[qid][acc]['mesh_all'] = record.mesh['all']
+				hits[qid][acc]['mesh_major'] = record.mesh.get('major','')
+				hits[qid][acc]['mesh_all'] = record.mesh.get('all','')
 				id_cache[acc] = qid
 			else:
 				logger.info('Found acc previous results from '+ id_cache[acc])
-				hits[qid][acc]['title'] = hits[id_cache[acc]][acc]['title']
-				hits[qid][acc]['tax_id'] = hits[id_cache[acc]][acc]['tax_id']
-				hits[qid][acc]['tax_name'] = hits[id_cache[acc]][acc]['tax_name']
-				hits[qid][acc]['lineage'] = hits[id_cache[acc]][acc]['lineage']
-				hits[qid][acc]['pubmed'] = hits[id_cache[acc]][acc]['pubmed']
-				hits[qid][acc]['mesh_major'] = hits[id_cache[acc]][acc]['mesh_major']
-				hits[qid][acc]['mesh_all'] = hits[id_cache[acc]][acc]['mesh_all']
+				hits[qid][acc]['title'] = hits[id_cache[acc]][acc].get('title','')
+				hits[qid][acc]['tax_id'] = hits[id_cache[acc]][acc].get('tax_id','')
+				hits[qid][acc]['tax_name'] = hits[id_cache[acc]][acc].get('tax_name','')
+				hits[qid][acc]['lineage'] = hits[id_cache[acc]][acc].get('lineage','')
+				hits[qid][acc]['pubmed'] = hits[id_cache[acc]][acc].get('pubmed','')
+				hits[qid][acc]['mesh_major'] = hits[id_cache[acc]][acc].get('mesh_major','')
+				hits[qid][acc]['mesh_all'] = hits[id_cache[acc]][acc].get('mesh_all','')
 	return hits
 
 def hits2tsv(path, hits):

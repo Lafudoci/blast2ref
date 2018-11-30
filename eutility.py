@@ -31,7 +31,7 @@ class EutilsAPI:
 			try:
 				last_call_time = time.time()
 				resp = requests.get(url=url)
-				if str(resp) == '<Response [200]>':
+				if resp.status_code in (200, 400):
 					return resp
 				else:
 					logger.warning(str(resp)+', retry in 5 sec.')
@@ -217,18 +217,23 @@ def prot_record_parser(acc):
 	logger.info('Fetching XML: ' + acc)
 	api = EutilsAPI()
 	resp = api.fetch('protein', acc, 'xml', 'native')
+
+	sr = SequenceRecord()
+	sr.acc = acc
+	sr.resp = resp.status_code
+	
+	if resp.status_code != 200:
+		root = ET.fromstring(resp.text)
+		err = root.find('ERROR')
+		logger.warning(err.text)
+
 	logger.debug('Loading XML.')
 	root = ET.fromstring(resp.text)
 	logger.debug('Parsing XML.')
-	sr = SequenceRecord()
-
 	bio_class = xmltree_bioclass_parser(acc, root)
-
-	sr.acc = acc
 	sr.bioseq = xmltree_bioseq_parser(acc, root, bio_class)
 	sr.source = xmltree_source_parser(root)
 	sr.pub = xmltree_pub_parser(root)
-
 	return sr
 
 def medline_fetch(pubmed_id):
@@ -340,8 +345,8 @@ def acc2record(acc):
 
 if __name__ == '__main__':
 	# record = acc2record('1713245A')
-	record = acc2record('XP_017736661.1')
-	logger.info('source: ' + str(record.source['tax_name']))
+	record = acc2record('JC7789')
+	logger.info('source: ' + str(record.source))
 	logger.info('bioseq: ' + str(record.bioseq))
 	logger.info('pmid: ' + str(record.pmid_list))
-	logger.info('MeSh: ' + str(record.mesh['major']))
+	logger.info('MeSh: ' + str(record.mesh))
