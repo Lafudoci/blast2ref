@@ -209,26 +209,44 @@ def xmltree_pub_parser(root):
 		j += 1
 	return {'citart': citart, 'citgen': citgen}
 
+def xmltree_fetch_n_builder(acc):
+	i = 0
+	while(True):
+		logger.info('Fetching XML: ' + acc)
+		api = EutilsAPI()
+		resp = api.fetch('protein', acc, 'xml', 'native')
+		try:
+			logger.debug('Loading XML.')
+			root = ET.fromstring(resp.text)
+			break
+		except ET.ParseError as err:
+			if i < 5:
+				logger.warning(err)
+				logger.warning('Refetch XML in 5 sec...')
+				time.sleep(5)
+				i += 1
+			else:
+				logger.warning('XML xmltree building failed.')
+				root = ET.fromstring("<?xml version=\"1.0\" encoding=\"UTF-8\"?> <Data><ERROR>Parsing error: %s</ERROR></Data>" % err)
+				break
+
+	if resp.status_code != 200:
+		err = root.find('ERROR')
+		logger.warning(err.text)
+
+	return root, resp.status_code
+
 def prot_record_parser(acc):
 	'''
 	Input acc id
 	Return record object containing acc, source, bioseq, publication info
 	'''
-	logger.info('Fetching XML: ' + acc)
-	api = EutilsAPI()
-	resp = api.fetch('protein', acc, 'xml', 'native')
-
 	sr = SequenceRecord()
 	sr.acc = acc
-	sr.resp = resp.status_code
-	
-	if resp.status_code != 200:
-		root = ET.fromstring(resp.text)
-		err = root.find('ERROR')
-		logger.warning(err.text)
 
-	logger.debug('Loading XML.')
-	root = ET.fromstring(resp.text)
+	root, status_code = xmltree_fetch_n_builder(sr.acc)
+	sr.resp = status_code
+
 	logger.debug('Parsing XML.')
 	bio_class = xmltree_bioclass_parser(acc, root)
 	sr.bioseq = xmltree_bioseq_parser(acc, root, bio_class)
