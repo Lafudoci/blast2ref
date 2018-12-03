@@ -255,7 +255,7 @@ def medline_parser(pubmed_id, medline):
 	field = ''
 
 	# Check medline format
-	if not medline[0:30].strip().startswith('PMID- '+pubmed_id):
+	if not medline[0:30].strip().startswith('PMID- '+pubmed_id+'\n'):
 		logger.debug('Medline was not found.')
 		return md_dict
 
