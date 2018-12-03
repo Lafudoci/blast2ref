@@ -1,6 +1,7 @@
 import eutility
 import utils
 import argparse
+import os
 
 import logging
 logger = logging.getLogger(__name__)
@@ -29,11 +30,11 @@ def main():
 		logger.warning('Unknow file format.')
 
 	# Enrich hits dict with mesh
-	enrich_hits_dict = utils.hits_mesh_enrich(hits_dict)
+	enrich_hits_dict = utils.hits_mesh_enrich(hits_dict, 100)
 
 	# Dump hits dict in tsv
 	logger.info('Writting result to file.')
-	utils.hits2tsv('blast-test.tsv', enrich_hits_dict)
+	utils.write_tsv('blast-test.tsv', 'w', enrich_hits_dict)
 
 	logger.info('Blast2Ref job done.')
 

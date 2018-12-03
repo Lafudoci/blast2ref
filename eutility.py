@@ -325,8 +325,8 @@ def mesh_collect(sr):
 	'''
 	MH_set_major = set()
 	MH_set_all = set()
-	if len(sr.pmid_list) > 0:
-		for pmid in sr.pmid_list:
+	if len(sr.pmids) > 0:
+		for pmid in sr.pmids:
 			md = medline_fetch(pmid)
 			md_dict = medline_parser(pmid, md)
 			# extract MH term from md_dict
@@ -344,12 +344,12 @@ def mesh_collect(sr):
 		MH_set_major = ''
 	if len(MH_set_all)==0:
 		MH_set_all = ''
-	mh_set_dict = {'major':MH_set_major,'all':MH_set_all}
+	mh_set_dict = {'major':list(MH_set_major),'all':list(MH_set_all)}
 	return mh_set_dict
 
 def acc2record(acc):
 	record = prot_record_parser(acc)
-	record.pmid_list = record_pmid_list(record)
+	record.pmids = record_pmid_list(record)
 	record.mesh = mesh_collect(record)
 	logger.debug(acc + ' record was succesfully built.')
 	return record

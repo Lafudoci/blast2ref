@@ -1,5 +1,6 @@
 import eutility
 import csv
+import json
 
 import logging
 logger = logging.getLogger(__name__)
@@ -22,7 +23,7 @@ def print_logo(version):
 def read_fmt6(path, start_qid=''):
 	col = []
 	hits = {}
-	if len(start_qid) == 0:
+	if start_qid == '':
 		start = True
 	else:
 		start = False
@@ -56,8 +57,9 @@ def read_fmt6(path, start_qid=''):
 							hits[col[0]][col[1]]['score'] = col[11]
 	return hits
 
-def hits_mesh_enrich(hits):
+def hits_mesh_enrich(hits, cache_interval):
 	# logger.debug(hits)
+	i = 1
 	id_cache = {}
 	for qid, accs in hits.items():
 		for acc, value in accs.items():
@@ -69,9 +71,10 @@ def hits_mesh_enrich(hits):
 				hits[qid][acc]['tax_id'] = record.source.get('tax_id','')
 				hits[qid][acc]['tax_name'] = record.source.get('tax_name','')
 				hits[qid][acc]['lineage'] = record.source.get('lineage','')
-				hits[qid][acc]['pubmed'] = record.pmid_list
+				hits[qid][acc]['pubmed'] = record.pmids
 				hits[qid][acc]['mesh_major'] = record.mesh.get('major','')
 				hits[qid][acc]['mesh_all'] = record.mesh.get('all','')
+				hits[qid][acc]['status'] = record.resp
 				id_cache[acc] = qid
 			else:
 				logger.info('Found acc previous results from '+ id_cache[acc])
@@ -82,11 +85,23 @@ def hits_mesh_enrich(hits):
 				hits[qid][acc]['pubmed'] = hits[id_cache[acc]][acc].get('pubmed','')
 				hits[qid][acc]['mesh_major'] = hits[id_cache[acc]][acc].get('mesh_major','')
 				hits[qid][acc]['mesh_all'] = hits[id_cache[acc]][acc].get('mesh_all','')
+				hits[qid][acc]['status'] = hits[id_cache[acc]][acc].get('status','')
+			if i == cache_interval:
+				hits2cache(hits)
+				i = 1
+			i+=1
+
+	hits2cache(hits)
 	return hits
 
-def hits2tsv(path, hits):
-	with open (path, 'w', newline="\n") as tsvfile:
-		colnames = ['qid', 'sid', 'evalue', 'score', 'title', 'tax_id', 'tax_name', 'lineage', 'pubmed', 'mesh_major', 'mesh_all']
+def hits2cache(hits):
+	with open('hits.cache', 'w') as f:
+		logger.info('Writing cache')
+		json.dump(hits, f)
+
+def write_tsv(path, mode, hits):
+	with open (path, mode, newline="\n") as tsvfile:
+		colnames = ['qid', 'sid', 'evalue', 'score', 'title', 'tax_id', 'tax_name', 'lineage', 'pubmed', 'mesh_major', 'mesh_all', 'status']
 		writer = csv.DictWriter(tsvfile, fieldnames=colnames, delimiter='\t')
 		writer.writeheader()
 		for qid, subj in hits.items():
