@@ -115,7 +115,6 @@ def xmltree_bioseq_parser(acc, root, bioseq_class):
 					bioseq[bioseq_tmp]['mol'] = child.get('value')
 				if child.tag == 'Seq-id_gi':
 					bioseq[bioseq_tmp]['gi'] = child.text
-				
 				# logger.debug(bioseq)
 
 			# == Check bioseq after each iter ==
@@ -362,9 +361,10 @@ def acc2record(acc):
 # 	return uids
 
 if __name__ == '__main__':
-	record = acc2record('1713245A')
-	# record = acc2record('PHT71263.1')
+	# record = acc2record('1713245A')
+	record = acc2record('AGT62457.1')
 	logger.info('source: ' + str(record.source))
 	logger.info('bioseq: ' + str(record.bioseq))
+	logger.info('pub: ' + str(record.pub))
 	logger.info('pmids: ' + str(record.pmids))
 	logger.info('MeSh: ' + str(record.mesh))
