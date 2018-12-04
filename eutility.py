@@ -261,7 +261,7 @@ def medline_fetch(pubmed_id):
 	'''
 	api = EutilsAPI()
 	resp = api.fetch('pubmed', pubmed_id, 'text', 'medline')
-	# logger.debug(resp.text)
+	logger.debug(resp.text)
 	return resp.text
 
 def medline_parser(pubmed_id, medline):
@@ -362,9 +362,9 @@ def acc2record(acc):
 # 	return uids
 
 if __name__ == '__main__':
-	# record = acc2record('1713245A')
-	record = acc2record('JC7789')
+	record = acc2record('1713245A')
+	# record = acc2record('PHT71263.1')
 	logger.info('source: ' + str(record.source))
 	logger.info('bioseq: ' + str(record.bioseq))
-	logger.info('pmid: ' + str(record.pmid_list))
+	logger.info('pmids: ' + str(record.pmids))
 	logger.info('MeSh: ' + str(record.mesh))

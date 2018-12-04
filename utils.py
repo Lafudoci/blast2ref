@@ -57,7 +57,7 @@ def read_fmt6(path, start_qid=''):
 							hits[col[0]][col[1]]['score'] = col[11]
 	return hits
 
-def hits_mesh_enrich(hits, cache_interval):
+def hits_mesh_enrich(hits, cache_interval, out):
 	# logger.debug(hits)
 	i = 1
 	id_cache = {}
@@ -87,17 +87,24 @@ def hits_mesh_enrich(hits, cache_interval):
 				hits[qid][acc]['mesh_all'] = hits[id_cache[acc]][acc].get('mesh_all','')
 				hits[qid][acc]['status'] = hits[id_cache[acc]][acc].get('status','')
 			if i == cache_interval:
-				hits2cache(hits)
+				hits2cache(hits, out)
 				i = 1
 			i+=1
 
-	hits2cache(hits)
+	hits2cache(hits, out)
 	return hits
 
-def hits2cache(hits):
-	with open('hits.cache', 'w') as f:
+def hits2cache(hits, out):
+	with open(out+'.cache', 'w') as f:
 		logger.info('Writing cache')
 		json.dump(hits, f)
+
+def cache2tsv(path, out):
+	logger.info('Loading '+path)
+	with open(path, 'r') as f:
+		hits = json.load(f)
+	logger.info('Writing tsv file...')
+	write_tsv(out, 'w', hits)
 
 def write_tsv(path, mode, hits):
 	with open (path, mode, newline="\n") as tsvfile:
