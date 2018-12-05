@@ -12,18 +12,21 @@ config = configparser.ConfigParser()
 config.read('config.ini')
 ncbi_api_key = config['NCBI_APIKEY']['APIKEY']
 
-eutility_base_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
+
 last_call_time = 0
 
 class EutilsAPI:
 	def __init__(self):
-		self.search_api = eutility_base_url + "esearch.fcgi?db=%s&term=%s&retmode=json" + "&api_key=" + ncbi_api_key
-		self.summary_api = eutility_base_url + "esummary.fcgi?db=%s&id=%s&retmode=json" + "&api_key=" + ncbi_api_key
-		self.fetch_api = eutility_base_url + "efetch.fcgi?db=%s&id=%s&retmode=%s&rettype=%s" + "&api_key=" + ncbi_api_key
-		self.citmatch_api = eutility_base_url + "ecitmatch.cgi?retmode=json&db=pubmed&retmode=xml&bdata=%s" + "&api_key=" + ncbi_api_key
-		self.link_api = eutility_base_url + "elink.fcgi?retmode=jsondbfrom=%s&db=%s&id=%s" + "&api_key=" + ncbi_api_key
+		self.base_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
+		self.search_api = self.base_url + "esearch.fcgi?db=%s&term=%s&retmode=json"
+		self.summary_api = self.base_url + "esummary.fcgi?db=%s&id=%s&retmode=json"
+		self.fetch_api = self.base_url + "efetch.fcgi?db=%s&id=%s&retmode=%s&rettype=%s"
+		self.citmatch_api = self.base_url + "ecitmatch.cgi?retmode=json&db=pubmed&retmode=xml&bdata=%s"
+		self.link_api = self.base_url + "elink.fcgi?retmode=jsondbfrom=%s&db=%s&id=%s"
 	def request(delf, url, *args):
 		global last_call_time
+		# add api key
+		url += "&api_key=" + ncbi_api_key
 		while(True):
 			# limit request to e-utils in 8 times/sec
 			while((time.time() - last_call_time) < 0.125):
