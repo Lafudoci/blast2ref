@@ -22,7 +22,7 @@ class EutilsAPI:
 		self.summary_api = self.base_url + "esummary.fcgi?db=%s&id=%s&retmode=json"
 		self.fetch_api = self.base_url + "efetch.fcgi?db=%s&id=%s&retmode=%s&rettype=%s"
 		self.citmatch_api = self.base_url + "ecitmatch.cgi?retmode=json&db=pubmed&retmode=xml&bdata=%s"
-		self.link_api = self.base_url + "elink.fcgi?retmode=jsondbfrom=%s&db=%s&id=%s"
+		self.link_api = self.base_url + "elink.fcgi?retmode=json&dbfrom=%s&db=%s%s"
 	def request(delf, url, *args):
 		global last_call_time
 		# add api key
@@ -382,12 +382,40 @@ def acc2uid(acc):
 		uids = ['0']
 	return uids
 
+def acclink_pubmed(accs):
+	i = 0
+	qstring = ''
+	link_dict = {}
+	for acc in accs:
+		qstring += '&id='+acc
+	api = EutilsAPI()
+	resp = api.link('protein', 'pubmed', qstring)
+	if resp.status_code == 200:
+		linke_result = json.loads(resp.text)
+		for linkset in linke_result.get('linksets'):
+			gi = linkset.get('ids')
+			if len(gi) > 0:
+				linkdbs = linkset.get('linksetdbs')
+				for link in linkdbs:
+					if link.get('linkname') == 'protein_pubmed':
+						link_dict[accs[i]] = {'gi':gi[0], 'pmids':link.get('links')}
+						i += 1
+			else:
+				i += 1
+	else:
+		logger.warning('ELinl request failed.')
+	logger.debug(link_dict)
+	return link_dict
+
 if __name__ == '__main__':
-	acc = 'AGT62457.1'
-	uids = acc2uid(acc)
-	record = uid2record(acc, uids)
-	logger.info('source: ' + str(record.source))
-	logger.info('bioseq: ' + str(record.bioseq))
-	logger.info('pub: ' + str(record.pub))
-	logger.info('pmids: ' + str(record.pmids))
-	logger.info('MeSh: ' + str(record.mesh))
+	# acc = 'AGT62457.1'
+	# uids = acc2uid(acc)
+	# record = uid2record(acc, uids)
+	# logger.info('source: ' + str(record.source))
+	# logger.info('bioseq: ' + str(record.bioseq))
+	# logger.info('pub: ' + str(record.pub))
+	# logger.info('pmids: ' + str(record.pmids))
+	# logger.info('MeSh: ' + str(record.mesh))
+
+	accs = ['CAO01356.1','1713245A','1JC9_A', 'AAA19454']
+	acclink_pubmed(accs)
