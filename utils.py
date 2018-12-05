@@ -66,7 +66,9 @@ def hits_mesh_enrich(hits, cache_interval, out):
 			if acc not in id_cache.keys():
 				r_acc = acc.split('.')[0]	# There is no version in record dict
 				logger.info('Enriching '+ qid +' '+ acc)
-				record = eutility.acc2record(acc)
+				uids = eutility.acc2uid(acc) 
+				record = eutility.uid2record(acc, uids)
+				hits[qid][acc]['uid'] = record.uids
 				hits[qid][acc]['title'] = record.bioseq.get(r_acc, {}).get('title','')
 				hits[qid][acc]['gi'] = record.bioseq.get(r_acc, {}).get('gi','')
 				hits[qid][acc]['tax_id'] = record.source.get('tax_id','')
@@ -79,6 +81,7 @@ def hits_mesh_enrich(hits, cache_interval, out):
 				id_cache[acc] = qid
 			else:
 				logger.info('Found acc previous results from '+ id_cache[acc])
+				hits[qid][acc]['uid'] = hits[id_cache[acc]][acc].get('uid','')
 				hits[qid][acc]['title'] = hits[id_cache[acc]][acc].get('title','')
 				hits[qid][acc]['gi'] = hits[id_cache[acc]][acc].get('gi','')
 				hits[qid][acc]['tax_id'] = hits[id_cache[acc]][acc].get('tax_id','')
@@ -110,7 +113,7 @@ def cache2tsv(path, out):
 
 def write_tsv(path, mode, hits):
 	with open (path, mode, newline="\n") as tsvfile:
-		colnames = ['qid','sid','evalue','score','title','gi','tax_id','tax_name','lineage','pubmed','mesh_major','mesh_all','status']
+		colnames = ['qid','sid','evalue','score','uid','title','gi','tax_id','tax_name','lineage','pubmed','mesh_major','mesh_all','status']
 		writer = csv.DictWriter(tsvfile, fieldnames=colnames, delimiter='\t')
 		writer.writeheader()
 		for qid, subj in hits.items():

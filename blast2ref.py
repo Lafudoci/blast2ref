@@ -10,7 +10,7 @@ logging.basicConfig(format='[%(asctime)s] [%(levelname)s] %(message)s', level=lo
 version = '0.1.0'
 
 argparse = argparse.ArgumentParser()
-argparse.add_argument('-j','--job_type', help="Job types: default, cache2tsv, novel-first, refed-first.", default = 'default')
+argparse.add_argument('-j','--job_type', help="Job types: default, acc2ref, cache2tsv, novel-first, refed-first.", default = 'default')
 argparse.add_argument('-br','--blast_result', help="Path to BLAST+ result output.")
 argparse.add_argument('-bf','--blast_format', help="Format of BLAST+ output.", default = 'fmt6')
 argparse.add_argument('-de','--de_result', help="Path to differ expression result output.")
@@ -22,16 +22,7 @@ argp = argparse.parse_args()
 def main():
 	utils.print_logo(version)
 
-	if argp.job_type == 'cache2tsv':
-		logger.info('Job type: Convert cache to tsv file.')
-		# check necessary args
-		if argp.cache_file and argp.output_file:
-			utils.cache2tsv(argp.cache_file, argp.output_file)
-			logger.info('Cache2tsv job done.')
-		else:
-			logger.warning('Error, lack of necessary args.')
-	
-	elif argp.job_type == 'default':
+	if argp.job_type == 'default':
 		logger.info('Job type: Blast2ref pipeline.')
 		# check necessary args
 		if argp.blast_result and argp.output_file:
@@ -42,11 +33,26 @@ def main():
 			else:
 				logger.warning('Unknow file format.')
 			# Enrich hits dict with mesh
-			enrich_hits_dict = utils.hits_mesh_enrich(hits_dict, 100, argp.output_file)
+			enrich_hits_dict = utils.hits_mesh_enrich(hits_dict, 500, argp.output_file)
 			# Format hits dict into tsv
 			logger.info('Writing result to file.')
 			utils.write_tsv(argp.output_file, 'w', enrich_hits_dict)
 			logger.info('Blast2Ref job done.')
+		else:
+			logger.warning('Error, lack of necessary args.')
+
+	elif argp.job_type == 'acc2ref':
+		logger.info('Job type: Collect Refs from BLAST fmt result.')
+		# check necessary args
+		# if argp.blast_result and argp.output_file:
+
+
+	elif argp.job_type == 'cache2tsv':
+		logger.info('Job type: Convert cache to tsv file.')
+		# check necessary args
+		if argp.cache_file and argp.output_file:
+			utils.cache2tsv(argp.cache_file, argp.output_file)
+			logger.info('Cache2tsv job done.')
 		else:
 			logger.warning('Error, lack of necessary args.')
 	

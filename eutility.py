@@ -52,17 +52,20 @@ class EutilsAPI:
 		return self.request(self.link_api%(dbfrom, db, idlist))
 
 class SequenceRecord:
-	# def __init__(self):
-	# 	self.acc = ''
-	# 	self.bioseq = {}
-	# 	self.source = {}
-	# 	self.pub = {}
-	# 	self.mesh = {}
-	pass
+	def __init__(self):
+		self.acc = ''
+		self.uids = []
+		self.resp = 400
+		self.bioseq = {}
+		self.source = {}
+		self.pub = {}
+		self.pmids = []
+		self.mesh = {}
+	# pass
 
 def xmltree_bioclass_parser(acc, root):
 	# identify bioseq class
-	bioseq_class = ''
+	bioseq_class = 'unknown'
 	for child in root.iter():
 		if child.tag == 'Bioseq-set_class':
 			bioseq_class = child.get('value')
@@ -98,9 +101,8 @@ def xmltree_bioseq_parser(acc, root, bioseq_class):
 						bioseq[bioseq_tmp] = {}
 				
 				if child.tag == 'Textseq-id_accession':
-					if child.text in bioseq[bioseq_tmp].values():
-						if child.text != bioseq[bioseq_tmp]['accession']:
-							logger.warning('Second accession id was ignored in the same bioseq: '+ child.text)
+					if child.text == bioseq[bioseq_tmp].get('accession'):
+						logger.warning('Second accession id was ignored in the same bioseq: '+ child.text)
 					else:
 						bioseq[bioseq_tmp]['accession'] = child.text
 				if child.tag == 'Textseq-id_name':
@@ -127,6 +129,7 @@ def xmltree_bioseq_parser(acc, root, bioseq_class):
 				bioseq_acc = bioseq[bioseq_tmp]['id_name']
 				bioseq[bioseq_acc] = bioseq.pop(bioseq_tmp)
 			else:
+				bioseq_acc = bioseq_tmp
 				logger.warning('Acc was not found in bioseq')
 
 			# *** Drop non-target bioseq to avoid too many results cause low mem crash ***
@@ -208,12 +211,18 @@ def xmltree_pub_parser(root):
 		j += 1
 	return {'citart': citart, 'citgen': citgen}
 
-def xmltree_fetch_n_builder(acc):
+def xmltree_fetch_n_builder(uids):
+	# Use first uid (workaround)
+	if len(uids) > 0:
+		uid = uids[0]
+	else:
+		uid = 0
+	
 	i = 0
 	while(True):
-		logger.info('Fetching XML: ' + acc)
+		logger.info('Fetching XML from UID: ' + str(uid))
 		api = EutilsAPI()
-		resp = api.fetch('protein', acc, 'xml', 'native')
+		resp = api.fetch('protein', uid, 'xml', 'native')
 		try:
 			logger.debug('Loading XML.')
 			root = ET.fromstring(resp.text)
@@ -235,15 +244,16 @@ def xmltree_fetch_n_builder(acc):
 
 	return root, resp.status_code
 
-def prot_record_parser(acc):
+def prot_record_parser(acc, uids):
 	'''
-	Input acc id
+	Input acc id and uid list
 	Return record object containing acc, source, bioseq, publication info
 	'''
 	sr = SequenceRecord()
 	sr.acc = acc
+	sr.uids = uids
 
-	root, status_code = xmltree_fetch_n_builder(sr.acc)
+	root, status_code = xmltree_fetch_n_builder(sr.uids)
 	sr.resp = status_code
 
 	logger.debug('Parsing XML.')
@@ -346,23 +356,33 @@ def mesh_collect(sr):
 	mh_set_dict = {'major':list(MH_set_major),'all':list(MH_set_all)}
 	return mh_set_dict
 
-def acc2record(acc):
-	record = prot_record_parser(acc)
-	record.pmids = record_pmid_list(record)
-	record.mesh = mesh_collect(record)
-	logger.debug(acc + ' record was succesfully built.')
+def uid2record(acc, uids):
+	record = prot_record_parser(acc, uids)
+	if len(record.bioseq) > 0:
+		record.pmids = record_pmid_list(record)
+		record.mesh = mesh_collect(record)
+		logger.debug(acc + ' record was succesfully built.')
+	else:
+		# if bioseg is empty then reset record
+		logger.debug(acc + ' record not found.')
+		record = SequenceRecord()
 	return record
 
 
-# def acc2uid(acc):
-# 	api = EutilsAPI()
-# 	resp = api.search('protein', acc)
-# 	uids = json.loads(resp.text)['esearchresult']['idlist']
-# 	return uids
+def acc2uid(acc):
+	api = EutilsAPI()
+	resp = api.search('protein', acc)
+	if resp.status_code == 200:
+		uids = json.loads(resp.text)['esearchresult']['idlist']
+		# logger.debug(uids)
+	else:
+		uids = ['0']
+	return uids
 
 if __name__ == '__main__':
-	# record = acc2record('1713245A')
-	record = acc2record('AGT62457.1')
+	acc = 'AGT62457.1'
+	uids = acc2uid(acc)
+	record = uid2record(acc, uids)
 	logger.info('source: ' + str(record.source))
 	logger.info('bioseq: ' + str(record.bioseq))
 	logger.info('pub: ' + str(record.pub))
