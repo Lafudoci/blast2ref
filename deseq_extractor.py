@@ -100,7 +100,23 @@ def de_filter_edger(de_dict):
 
 	return filtered_de_list
 
+def de_seq_extract_edger(fasta, de_list, outpath):
+	logger.info('Extracting DE seq from total fasta')
+	de_seq = {}
+	if de_level == 'gene':
+		for iso_id, value in fasta.items():
+			gene_id = '_'.join(iso_id.split('_')[:4])
+			if gene_id in de_list:
+				de_seq[iso_id] = value['seq']
+	elif de_level == 'isoform':
+		for de in de_list:
+			de_seq[de] = fasta[de]['seq']
+	else:
+		logger.warning('Unknown DE level: '+ de_level)
+	
+	logger.info('Extracted fasta seq: '+ str(len(de_seq)))
 
+	return de_seq
 
 
 def main():
@@ -112,14 +128,15 @@ def main():
 		logger.info('DE profile: edgeR')
 		de_dict = read_de_edger()
 		filtered_de_list = de_filter_edger(de_dict)
+
+		# extract DE seq
+		de_seq_extract_edger(fasta_dict, filtered_de_list, output_path)
+		# de_cache_edger()
+		# de_tsv_edger()
 	else:
 		logger.warning('Unknown DE profile: '+ de_profile)
 
-	# extract DE seq
-	de_seq_extract(fasta_dict, filtered_de_dict, output_path)
 
-	# de_cache_edger()
-	# de_tsv_edger()
 
 if __name__ == '__main__':
 	main()
