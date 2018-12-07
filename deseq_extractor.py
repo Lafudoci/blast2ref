@@ -1,3 +1,4 @@
+import json
 
 import logging
 logger = logging.getLogger(__name__)
@@ -18,7 +19,7 @@ trinity_fasta = {}
 fasta_path =  r'D:\2017NGS\lbr2_trinity\Trinity.fasta'
 de_result_path = r'D:\2017NGS\rsem\edgeR_results\RSEM.gene.counts.matrix.control_vs_early.edgeR.DE_results'
 
-output_path = r'filtered_seq.fasta'
+fasta_output_path = r'filtered_seq.fasta'
 
 def read_fasta(fasta_path):
 	logger.info('Loading '+ str(fasta_path))
@@ -97,11 +98,10 @@ def de_filter_edger(de_dict):
 		if abs(de['logFC'])>abs_min_logfc and de['logCPM']>min_logcpm and de['PValue']<max_pvalue and de['FDR']<max_fdr:
 			filtered_de_list.append(de['seqid'])
 	logger.info('DE genes after filtering: '+ str(len(filtered_de_list)))
-
 	return filtered_de_list
 
-def de_seq_extract_edger(fasta, de_list, outpath):
-	logger.info('Extracting DE seq from total fasta')
+def de_seq_extract_edger(fasta, de_list):
+	logger.info('Extracting DE seq from total fasta...')
 	de_seq = {}
 	if de_level == 'gene':
 		for iso_id, value in fasta.items():
@@ -118,8 +118,25 @@ def de_seq_extract_edger(fasta, de_list, outpath):
 
 	return de_seq
 
+def de_cache_edger(de_dict, de_list):
+	cache = {}
+	logger.debug('Writing DE seq cache...')
+	for sid, value in de_dict.items():
+		if sid in de_list:
+			cache[sid] = value
+	with open ('deseq.cache', 'w') as f:
+		f.write(json.dumps(cache))
 
-def main():
+
+
+def write_fasta(seq_dict, path):
+	logger.info('Writing DE seq to fasta file: '+ path)
+	with open(path, 'w') as f:
+		for sid, seq in seq_dict.items():
+			f.write('>'+sid+'\n'+seq+'\n')
+	logger.info('The fasta file was built.')
+
+def deseq_extractor():
 	# read fasta
 	fasta_dict = read_fasta(fasta_path)
 
@@ -128,15 +145,17 @@ def main():
 		logger.info('DE profile: edgeR')
 		de_dict = read_de_edger()
 		filtered_de_list = de_filter_edger(de_dict)
+		de_cache_edger(de_dict, filtered_de_list)
+		# de_tsv_edger()
 
 		# extract DE seq
-		de_seq_extract_edger(fasta_dict, filtered_de_list, output_path)
-		# de_cache_edger()
-		# de_tsv_edger()
+		de_seq = de_seq_extract_edger(fasta_dict, filtered_de_list)
+		write_fasta(de_seq, fasta_output_path)
+
 	else:
 		logger.warning('Unknown DE profile: '+ de_profile)
 
 
 
 if __name__ == '__main__':
-	main()
+	deseq_extractor()
