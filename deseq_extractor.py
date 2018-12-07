@@ -22,7 +22,7 @@ output_path = 'diff_fasta_all.fasta'
 def read_fasta(fasta_path):
 	logger.info('Loading '+ str(fasta_path))
 	seq_id = ''
-	with fasta_path.open() as f:
+	with open(fasta_path, 'r') as f:
 		for line in f.readlines():
 			line = line.strip()
 			if len(line) > 0:
@@ -84,7 +84,9 @@ def de_filter_edger(de_dict):
 	logger.info('DE genes after filtering: '+ str(len(filtered_de)))
 	return filtered_de
 
-# def de_seq_extract(fasta, de_dict, outpath):
+def de_seq_extract(fasta, de_dict, outpath):
+	for de in de_dict:
+		print(de)
 
 
 
@@ -101,7 +103,7 @@ def main():
 		logger.warning('Unknown DE profile: '+ de_profile)
 
 	# extract DE seq
-	# de_seq_extract(fasta_dict, filtered_de_dict, output_path)
+	de_seq_extract(fasta_dict, filtered_de_dict, output_path)
 
 	# de_cache_edger()
 	# de_tsv_edger()
