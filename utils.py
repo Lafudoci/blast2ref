@@ -121,6 +121,17 @@ def write_tsv(path, mode, hits):
 				row_dict = {'qid':qid, 'sid':bioseq[0], **bioseq[1]}
 				writer.writerow(row_dict)
 
+def write_de_tsv(path, de_dict):
+	colnames = []
+	for de in de_dict.values():
+		for header in de.keys():
+			colnames.append(header)
+		break
+	with open (path, 'w', newline="\n") as tsvfile:
+		writer = csv.DictWriter(tsvfile, fieldnames=colnames, delimiter='\t')
+		writer.writeheader()
+		for de in de_dict.values():
+			writer.writerow(de)
 
 if __name__ == '__main__':
 	print_logo('0.1.0')

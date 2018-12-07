@@ -1,5 +1,7 @@
 import json
 
+import utils
+
 import logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(format='[%(asctime)s] [%(levelname)s] %(message)s', level=logging.DEBUG)
@@ -126,6 +128,8 @@ def de_cache_edger(de_dict, de_list):
 			cache[sid] = value
 	with open ('deseq.cache', 'w') as f:
 		f.write(json.dumps(cache))
+
+	utils.write_de_tsv('deseq.tsv',cache)
 
 
 
