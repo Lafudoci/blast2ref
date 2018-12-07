@@ -6,7 +6,8 @@ logging.basicConfig(format='[%(asctime)s] [%(levelname)s] %(message)s', level=lo
 import configparser
 config = configparser.ConfigParser()
 config.read('config.ini')
-de_profile = config['DE_FILTER']['PROFILE']
+de_profile = config['DE_FILTER']['PROFILE'].lower()
+de_level = config['edgeR_PROFILE']['DE_Level'].lower()
 max_pvalue = float(config['edgeR_PROFILE']['MAX_PValue'])
 max_fdr = float(config['edgeR_PROFILE']['MAX_FDR'])
 min_logcpm = float(config['edgeR_PROFILE']['MIN_logCPM'])
@@ -17,7 +18,7 @@ trinity_fasta = {}
 fasta_path =  r'D:\2017NGS\lbr2_trinity\Trinity.fasta'
 de_result_path = r'D:\2017NGS\rsem\edgeR_results\RSEM.gene.counts.matrix.control_vs_early.edgeR.DE_results'
 
-output_path = 'diff_fasta_all.fasta'
+output_path = r'filtered_seq.fasta'
 
 def read_fasta(fasta_path):
 	logger.info('Loading '+ str(fasta_path))
@@ -74,6 +75,20 @@ def read_de_edger():
 					j+=1
 			i+=1
 	logger.info('Loaded DE results: '+ str(len(de_dict)))
+
+	# verify DE level
+	global de_level
+	for de in de_dict:
+		sid = de.split('_')
+		if de_level == 'gene' and sid[-1].startswith('i'):
+			logger.warning('Isoform id was detected, DE level should be isoform. Overwritted config.')
+			de_level = 'isoform'
+			break
+		if de_level == 'isoform' and sid[-1].startswith('g'):
+			logger.warning('Gene id was detected, DE level should be gene. Overwritted config.')
+			de_level = 'gene'
+			break
+
 	return de_dict
 
 def de_filter_edger(de_dict):
@@ -95,7 +110,7 @@ def main():
 	fasta_dict = read_fasta(fasta_path)
 
 	# read DE results
-	if de_profile.lower() == 'edger':
+	if de_profile == 'edger':
 		logger.info('DE profile: edgeR')
 		de_dict = read_de_edger()
 		filtered_de_dict = de_filter_edger(de_dict)
