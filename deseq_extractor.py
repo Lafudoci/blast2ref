@@ -94,7 +94,6 @@ def read_de_edger():
 def de_filter_edger(de_dict):
 	filtered_de = []
 	for de in de_dict.values():
-		if de['logFC']>abs_min_logfc and de['logCPM']>min_logcpm and de['PValue']<max_pvalue and de['FDR']<max_fdr:
 			filtered_de.append(de)
 	logger.info('DE genes after filtering: '+ str(len(filtered_de)))
 	return filtered_de
@@ -102,6 +101,7 @@ def de_filter_edger(de_dict):
 def de_seq_extract(fasta, de_dict, outpath):
 	for de in de_dict:
 		print(de)
+		if abs(de['logFC'])>abs_min_logfc and de['logCPM']>min_logcpm and de['PValue']<max_pvalue and de['FDR']<max_fdr:
 
 
 
