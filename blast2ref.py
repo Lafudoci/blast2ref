@@ -51,8 +51,6 @@ def main():
 		logger.info('Job type: Convert cache to tsv file.')
 		# check necessary args
 		if argp.cache_file and argp.output_file:
-			utils.cache2tsv(argp.cache_file, argp.output_file)
-			logger.info('Cache2tsv job done.')
 			try: 
 				utils.cache2tsv(argp.cache_file, argp.output_file)
 				logger.info('Cache2tsv job done.')
