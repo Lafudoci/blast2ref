@@ -58,46 +58,68 @@ def read_fmt6(path, start_qid=''):
 	return hits
 
 def hits_mesh_enrich(hits, cache_interval, out):
+	# load cache
+	cache = chache2hits(out)
+	if cache:
+		hits = cache
+
 	# logger.debug(hits)
 	i = 1
 	id_cache = {}
 	for qid, accs in hits.items():
 		for acc, value in accs.items():
-			if acc not in id_cache.keys():
-				r_acc = acc.split('.')[0]	# There is no version in record dict
-				logger.info('Enriching '+ qid +' '+ acc)
-				uids = eutility.acc2uid(acc) 
-				record = eutility.uid2record(acc, uids)
-				hits[qid][acc]['uid'] = record.uids
-				hits[qid][acc]['title'] = record.bioseq.get(r_acc, {}).get('title','')
-				hits[qid][acc]['gi'] = record.bioseq.get(r_acc, {}).get('gi','')
-				hits[qid][acc]['tax_id'] = record.source.get('tax_id','')
-				hits[qid][acc]['tax_name'] = record.source.get('tax_name','')
-				hits[qid][acc]['lineage'] = record.source.get('lineage','')
-				hits[qid][acc]['pubmed'] = record.pmids
-				hits[qid][acc]['mesh_major'] = record.mesh.get('major','')
-				hits[qid][acc]['mesh_all'] = record.mesh.get('all','')
-				hits[qid][acc]['status'] = record.resp
+			# check if hit was already enriched (from cache).
+			if value.get('status'):
 				id_cache[acc] = qid
+				logger.debug('%s, %s was found in cache, skipping.'%(qid, acc))
 			else:
-				logger.info('Found acc previous results from '+ id_cache[acc])
-				hits[qid][acc]['uid'] = hits[id_cache[acc]][acc].get('uid','')
-				hits[qid][acc]['title'] = hits[id_cache[acc]][acc].get('title','')
-				hits[qid][acc]['gi'] = hits[id_cache[acc]][acc].get('gi','')
-				hits[qid][acc]['tax_id'] = hits[id_cache[acc]][acc].get('tax_id','')
-				hits[qid][acc]['tax_name'] = hits[id_cache[acc]][acc].get('tax_name','')
-				hits[qid][acc]['lineage'] = hits[id_cache[acc]][acc].get('lineage','')
-				hits[qid][acc]['pubmed'] = hits[id_cache[acc]][acc].get('pubmed','')
-				hits[qid][acc]['mesh_major'] = hits[id_cache[acc]][acc].get('mesh_major','')
-				hits[qid][acc]['mesh_all'] = hits[id_cache[acc]][acc].get('mesh_all','')
-				hits[qid][acc]['status'] = hits[id_cache[acc]][acc].get('status','')
-			if i == cache_interval:
-				hits2cache(hits, out)
-				i = 1
-			i+=1
+				if acc not in id_cache.keys():
+					r_acc = acc.split('.')[0]	# There is no version in record dict
+					logger.info('Enriching '+ qid +' '+ acc)
+					uids = eutility.acc2uid(acc) 
+					record = eutility.uid2record(acc, uids)
+					hits[qid][acc]['uid'] = record.uids
+					hits[qid][acc]['title'] = record.bioseq.get(r_acc, {}).get('title','')
+					hits[qid][acc]['gi'] = record.bioseq.get(r_acc, {}).get('gi','')
+					hits[qid][acc]['tax_id'] = record.source.get('tax_id','')
+					hits[qid][acc]['tax_name'] = record.source.get('tax_name','')
+					hits[qid][acc]['lineage'] = record.source.get('lineage','')
+					hits[qid][acc]['pubmed'] = record.pmids
+					hits[qid][acc]['mesh_major'] = record.mesh.get('major','')
+					hits[qid][acc]['mesh_all'] = record.mesh.get('all','')
+					hits[qid][acc]['status'] = record.resp
+					id_cache[acc] = qid
+				else:
+					logger.info('Found acc previous results from '+ id_cache[acc])
+					hits[qid][acc]['uid'] = hits[id_cache[acc]][acc].get('uid','')
+					hits[qid][acc]['title'] = hits[id_cache[acc]][acc].get('title','')
+					hits[qid][acc]['gi'] = hits[id_cache[acc]][acc].get('gi','')
+					hits[qid][acc]['tax_id'] = hits[id_cache[acc]][acc].get('tax_id','')
+					hits[qid][acc]['tax_name'] = hits[id_cache[acc]][acc].get('tax_name','')
+					hits[qid][acc]['lineage'] = hits[id_cache[acc]][acc].get('lineage','')
+					hits[qid][acc]['pubmed'] = hits[id_cache[acc]][acc].get('pubmed','')
+					hits[qid][acc]['mesh_major'] = hits[id_cache[acc]][acc].get('mesh_major','')
+					hits[qid][acc]['mesh_all'] = hits[id_cache[acc]][acc].get('mesh_all','')
+					hits[qid][acc]['status'] = hits[id_cache[acc]][acc].get('status','')
+				if i == cache_interval:
+					hits2cache(hits, out)
+					i = 1
+				i+=1
 
 	hits2cache(hits, out)
 	return hits
+
+def chache2hits(out):
+	cache = {}
+	try:
+		with open(out+'.cache', 'r') as f:
+			cache = json.load(f)
+		logger.debug('Hits cache exists. Continuing previous job.')
+		return cache
+	except FileNotFoundError:
+		logger.debug('Hits cache not found. Creating new job.')
+		return False
+	
 
 def hits2cache(hits, out):
 	with open(out+'.cache', 'w') as f:
