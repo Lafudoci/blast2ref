@@ -53,6 +53,11 @@ def main():
 		if argp.cache_file and argp.output_file:
 			utils.cache2tsv(argp.cache_file, argp.output_file)
 			logger.info('Cache2tsv job done.')
+			try: 
+				utils.cache2tsv(argp.cache_file, argp.output_file)
+				logger.info('Cache2tsv job done.')
+			except FileNotFoundError:
+				logger.warning('Hits cache not found. Job skipping.')
 		else:
 			logger.warning('Error, lack of necessary args.')
 	
