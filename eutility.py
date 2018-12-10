@@ -290,7 +290,7 @@ def medline_parser(pubmed_id, medline):
 		return md_dict
 
 	for line in medline.split('\n'):
-		if len(line)>0:
+		if len(line)>5:
 			if line[4] == '-':
 				new_filed = True
 				field, value = line.split('- ',1)
