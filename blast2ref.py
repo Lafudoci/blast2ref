@@ -34,7 +34,7 @@ def main():
 			else:
 				logger.warning('Unknow file format.')
 			# Enrich hits dict with mesh
-			enrich_hits_dict = lable_crawler.hits_mesh_enrich(hits_dict, 500, argp.output_file)
+			enrich_hits_dict = lable_crawler.hits_enrich(hits_dict, 500, argp.output_file)
 			# Format hits dict into tsv
 			logger.info('Writing result to file.')
 			lable_crawler.write_tsv(argp.output_file, 'w', enrich_hits_dict)

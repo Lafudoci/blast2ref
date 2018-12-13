@@ -43,7 +43,7 @@ def read_fmt6(path, start_qid=''):
 							hits[col[0]][col[1]]['score'] = col[11]
 	return hits
 
-def hits_mesh_enrich(hits, cache_interval, out):
+def hits_enrich(hits, cache_interval, out):
 	# load cache
 	cache = chache2hits(out)
 	if cache:
@@ -73,6 +73,7 @@ def hits_mesh_enrich(hits, cache_interval, out):
 					hits[qid][acc]['pubmed'] = record.pmids
 					hits[qid][acc]['mesh_major'] = record.mesh.get('major','')
 					hits[qid][acc]['mesh_all'] = record.mesh.get('all','')
+					hits[qid][acc]['mesh_detail'] = record.mesh.get('detail','')
 					hits[qid][acc]['status'] = record.resp
 					id_cache[acc] = qid
 				else:
@@ -86,6 +87,7 @@ def hits_mesh_enrich(hits, cache_interval, out):
 					hits[qid][acc]['pubmed'] = hits[id_cache[acc]][acc].get('pubmed','')
 					hits[qid][acc]['mesh_major'] = hits[id_cache[acc]][acc].get('mesh_major','')
 					hits[qid][acc]['mesh_all'] = hits[id_cache[acc]][acc].get('mesh_all','')
+					hits[qid][acc]['mesh_detail'] = hits[id_cache[acc]][acc].get('mesh_detail','')
 					hits[qid][acc]['status'] = hits[id_cache[acc]][acc].get('status','')
 				if i == cache_interval:
 					hits2cache(hits, out)
@@ -121,7 +123,7 @@ def cache2tsv(path, out):
 
 def write_tsv(path, mode, hits):
 	with open (path, mode, newline="\n") as tsvfile:
-		colnames = ['qid','sid','evalue','score','uid','title','gi','tax_id','tax_name','lineage','pubmed','mesh_major','mesh_all','status']
+		colnames = ['qid','sid','evalue','score','uid','title','gi','tax_id','tax_name','lineage','pubmed','mesh_major','mesh_all', 'mesh_detail','status']
 		writer = csv.DictWriter(tsvfile, fieldnames=colnames, delimiter='\t')
 		writer.writeheader()
 		for qid, subj in hits.items():
@@ -143,4 +145,6 @@ def write_de_tsv(path, de_dict):
 
 
 if __name__ == '__main__':
-	main()
+	hits_dict = read_fmt6('diff_fasta_all_blastx_nr_seq1_head10.fmt6')
+	enrich_hits_dict = hits_enrich(hits_dict, 2, 'blast2ref_test10.tsv')
+	write_tsv('blast2ref_test10.tsv', 'w', enrich_hits_dict)
