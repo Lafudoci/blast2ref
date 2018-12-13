@@ -376,8 +376,20 @@ def acc2uid(acc):
 	api = EutilsAPI()
 	resp = api.search('protein', acc)
 	if resp.status_code == 200:
-		uids = json.loads(resp.text)['esearchresult']['idlist']
-		# logger.debug(uids)
+		i = 0
+		while(True):
+			uids = json.loads(resp.text)['esearchresult'].get('idlist', '')
+			# logger.debug(uids)
+			if uids != '':
+				break
+			elif i > 5:
+				logger.warning('UID not found.')
+				uids = ['0']
+				break
+			else:
+				logger.warning('UID not found. Retrying...')
+				time.sleep(5)
+				i += 1
 	else:
 		uids = ['0']
 	return uids
