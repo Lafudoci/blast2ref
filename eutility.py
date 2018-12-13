@@ -333,10 +333,11 @@ def record_pmid_list(sr):
 def mesh_collect(sr):
 	'''
 	Input record obj.
-	Output major and all MeSH term sets in a dict.
+	Output major & all MeSH term sets, detail dict in a dict.
 	'''
 	MH_set_major = set()
 	MH_set_all = set()
+	detail_dict = {}
 	if len(sr.pmids) > 0:
 		for pmid in sr.pmids:
 			md = medline_fetch(pmid)
@@ -352,11 +353,20 @@ def mesh_collect(sr):
 					else:
 						MH_set_all.add(value)
 
+					# build detail dict of pmid-MH
+					if detail_dict.get(pmid, '') == '':
+						detail_dict[pmid] = []
+						detail_dict[pmid].append(value)
+					else:
+						detail_dict[pmid].append(value)
+
 	if len(MH_set_major)==0:
 		MH_set_major = ''
 	if len(MH_set_all)==0:
 		MH_set_all = ''
-	mh_set_dict = {'major':list(MH_set_major),'all':list(MH_set_all)}
+	if len(detail_dict)==0:
+		detail_dict = {}
+	mh_set_dict = {'major':list(MH_set_major),'all':list(MH_set_all), 'detail': detail_dict}
 	return mh_set_dict
 
 def uid2record(acc, uids):
