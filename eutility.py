@@ -429,6 +429,30 @@ def acclink_pubmed(accs):
 	logger.debug(link_dict)
 	return link_dict
 
+def taxid2lineage(taxid):
+	while(True):
+			logger.info('Fetching lineage of taxid: ' + str(taxid))
+			api = EutilsAPI()
+			resp = api.fetch('taxonomy', taxid, 'xml', 'native')
+			try:
+				logger.debug('Loading XML...')
+				root = ET.fromstring(resp.text)
+				break
+			except ET.ParseError as err:
+				if i < 5:
+					logger.warning(err)
+					logger.warning('Refetch XML in 5 sec...')
+					time.sleep(5)
+					i += 1
+				else:
+					logger.warning('XML xmltree building failed.')
+					root = ET.fromstring("<?xml version=\"1.0\" encoding=\"UTF-8\"?> <Data><ERROR>Parsing error: %s</ERROR></Data>" % err)
+					break
+	for el in root.iter():
+		if el.tag == 'Lineage':
+			return el.text
+
+
 if __name__ == '__main__':
 	# acc = 'AGT62457.1'
 	# uids = acc2uid(acc)
@@ -439,5 +463,7 @@ if __name__ == '__main__':
 	# logger.info('pmids: ' + str(record.pmids))
 	# logger.info('MeSh: ' + str(record.mesh))
 
-	accs = ['CAO01356.1','1713245A','1JC9_A', 'AAA19454']
-	acclink_pubmed(accs)
+	# accs = ['CAO01356.1','1713245A','1JC9_A', 'AAA19454']
+	# acclink_pubmed(accs)
+
+	logger.info(taxid2lineage(162300))
