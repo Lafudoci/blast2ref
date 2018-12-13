@@ -1,5 +1,6 @@
 import eutility
 import utils
+import lable_crawler
 import argparse
 import os
 
@@ -29,14 +30,14 @@ def main():
 			# Read blast result to hits dict
 			if argp.blast_format == 'fmt6':
 				logger.info('Reading blast output from fmt6 file.')
-				hits_dict = utils.read_fmt6(argp.blast_result)
+				hits_dict = lable_crawler.read_fmt6(argp.blast_result)
 			else:
 				logger.warning('Unknow file format.')
 			# Enrich hits dict with mesh
-			enrich_hits_dict = utils.hits_mesh_enrich(hits_dict, 500, argp.output_file)
+			enrich_hits_dict = lable_crawler.hits_mesh_enrich(hits_dict, 500, argp.output_file)
 			# Format hits dict into tsv
 			logger.info('Writing result to file.')
-			utils.write_tsv(argp.output_file, 'w', enrich_hits_dict)
+			lable_crawler.write_tsv(argp.output_file, 'w', enrich_hits_dict)
 			logger.info('Blast2Ref job done.')
 		else:
 			logger.warning('Error, lack of necessary args.')
@@ -52,7 +53,7 @@ def main():
 		# check necessary args
 		if argp.cache_file and argp.output_file:
 			try: 
-				utils.cache2tsv(argp.cache_file, argp.output_file)
+				lable_crawler.cache2tsv(argp.cache_file, argp.output_file)
 				logger.info('Cache2tsv job done.')
 			except FileNotFoundError:
 				logger.warning('Hits cache not found. Job skipping.')
