@@ -435,7 +435,7 @@ def taxid2lineage(taxid):
 			api = EutilsAPI()
 			resp = api.fetch('taxonomy', taxid, 'xml', 'native')
 			try:
-				logger.debug('Loading XML...')
+				# logger.debug('Loading XML...')
 				root = ET.fromstring(resp.text)
 				break
 			except ET.ParseError as err:
