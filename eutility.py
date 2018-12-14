@@ -452,6 +452,37 @@ def taxid2lineage(taxid):
 		if el.tag == 'Lineage':
 			return el.text
 
+def pubmed_parser(pubmed_id):
+	while(True):
+			logger.info('Fetching pubmed_id: ' + str(pubmed_id))
+			api = EutilsAPI()
+			resp = api.fetch('pubmed', pubmed_id, 'xml', 'native')
+			try:
+				# logger.debug('Loading XML...')
+				root = ET.fromstring(resp.text)
+				break
+			except ET.ParseError as err:
+				if i < 5:
+					logger.warning(err)
+					logger.warning('Refetch XML in 5 sec...')
+					time.sleep(5)
+					i += 1
+				else:
+					logger.warning('XML xmltree building failed.')
+					root = ET.fromstring("<?xml version=\"1.0\" encoding=\"UTF-8\"?> <Data><ERROR>Parsing error: %s</ERROR></Data>" % err)
+					break
+	pub_dict = {}
+	for el in root.iter():
+		if el.tag == 'ISOAbbreviation':
+			pub_dict['iso_j_abb'] = el.text
+		if el.tag == 'ArticleTitle':
+			pub_dict['article_title'] = el.text
+		if el.tag == 'AbstractText':
+			pub_dict['abs'] = el.text.strip()
+		if el.tag == 'PubMedPubDate' and el.attrib == {'PubStatus':"accepted"}:
+			pub_dict['accepted_date'] = el.find('Year').text+el.find('Month').text+el.find('Day').text
+
+	return pub_dict
 
 if __name__ == '__main__':
 	# acc = 'AGT62457.1'
@@ -466,4 +497,6 @@ if __name__ == '__main__':
 	# accs = ['CAO01356.1','1713245A','1JC9_A', 'AAA19454']
 	# acclink_pubmed(accs)
 
-	logger.info(taxid2lineage(162300))
+	# logger.info(taxid2lineage(162300))
+
+	logger.info(pubmed_parser(23954694))
