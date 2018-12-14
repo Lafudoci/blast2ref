@@ -1,3 +1,5 @@
+import json
+
 import logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(format='[%(asctime)s] [%(levelname)s] %(message)s', level=logging.DEBUG)
@@ -16,7 +18,9 @@ def print_logo(version):
 ============================================="%(version)
 	print(logo)
 
-
+def dump_json_file(dict, path):
+	with open(path, 'w') as f:
+		json.dump(dict, f)
 
 if __name__ == '__main__':
 	print_logo('0.1.0')
