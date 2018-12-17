@@ -19,6 +19,7 @@ def read_fmt6(path, start_qid=''):
 			col = line.strip().split('\t')
 			# qid = col[0]
 			# sid = col[1]
+			pident = col[2]
 			# evalue = col[10]
 			# score = col[11]
 			if (start == False) and (start_qid == col[0]):
@@ -28,17 +29,20 @@ def read_fmt6(path, start_qid=''):
 				if (col[0] not in hits):
 					hits[col[0]] = {}
 					hits[col[0]][col[1]] = {}
+					hits[col[0]][col[1]]['pident'] = col[2]
 					hits[col[0]][col[1]]['evalue'] = col[10]
 					hits[col[0]][col[1]]['score'] = col[11]
 				else:
 					if col[1] not in hits[col[0]]:
 						hits[col[0]][col[1]] = {}
+						hits[col[0]][col[1]]['pident'] = col[2]
 						hits[col[0]][col[1]]['evalue'] = col[10]
 						hits[col[0]][col[1]]['score'] = col[11]
 					else:
 						# only keep best score each acc in dict
 						if col[11] > hits[col[0]][col[1]]['score']:
 							hits[col[0]][col[1]] = {}
+							hits[col[0]][col[1]]['pident'] = col[2]
 							hits[col[0]][col[1]]['evalue'] = col[10]
 							hits[col[0]][col[1]]['score'] = col[11]
 	return hits
@@ -123,7 +127,7 @@ def cache2tsv(path, out):
 
 def write_tsv(path, mode, hits):
 	with open (path, mode, newline="\n") as tsvfile:
-		colnames = ['qid','sid','evalue','score','uid','title','gi','tax_id','tax_name','lineage','pubmed','mesh_major','mesh_all', 'mesh_detail','status']
+		colnames = ['qid','sid','pident','evalue','score','uid','title','gi','tax_id','tax_name','lineage','pubmed','mesh_major','mesh_all', 'mesh_detail','status']
 		writer = csv.DictWriter(tsvfile, fieldnames=colnames, delimiter='\t')
 		writer.writeheader()
 		for qid, subj in hits.items():
