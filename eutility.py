@@ -18,7 +18,7 @@ last_call_time = 0
 class EutilsAPI:
 	def __init__(self):
 		self.base_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
-		self.search_api = self.base_url + "esearch.fcgi?db=%s&term=%s&retmode=json"
+		self.search_api = self.base_url + "esearch.fcgi?db=%s&term=%s&retmode=json&sort=relevance"
 		self.summary_api = self.base_url + "esummary.fcgi?db=%s&id=%s&retmode=json"
 		self.fetch_api = self.base_url + "efetch.fcgi?db=%s&id=%s&retmode=%s&rettype=%s"
 		self.citmatch_api = self.base_url + "ecitmatch.cgi?retmode=json&db=pubmed&retmode=xml&bdata=%s"
