@@ -484,6 +484,18 @@ def pubmed_parser(pubmed_id):
 
 	return pub_dict
 
+def name2gene(name_string):
+	gene_info = {}
+	api = EutilsAPI()
+	resp = api.search('gene',name_string)
+	top_hit_id = json.loads(resp.text)['esearchresult']['idlist'][0]
+	resp = api.summary('gene', top_hit_id)
+	result = json.loads(resp.text)['result']
+	gene_info['uid'] = result[top_hit_id]['uid']
+	gene_info['name'] = result[top_hit_id]['name']
+	gene_info['des'] = result[top_hit_id]['description']
+	return gene_info
+
 if __name__ == '__main__':
 	# acc = 'AGT62457.1'
 	# uids = acc2uid(acc)
@@ -499,4 +511,6 @@ if __name__ == '__main__':
 
 	# logger.info(taxid2lineage(162300))
 
-	logger.info(pubmed_parser(23954694))
+	# logger.info(pubmed_parser(23954694))
+
+	logger.info(name2gene('vesicle+associated+membrane+protein+2+homo+sapiens'))
