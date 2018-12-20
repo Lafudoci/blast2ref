@@ -493,7 +493,7 @@ def name2gene(name_string):
 	api = EutilsAPI()
 	while(True):
 		name_string = name_string.lower().replace(' ', '+')
-		resp = api.search('gene',name_string+'+homo+sapiens')
+		resp = api.search('gene',name_string)
 		search_results = json.loads(resp.text).get('esearchresult',-1).get('idlist',-1)
 		if search_results == -1:
 			logger.warning('Could not parse esearchresult. Retrying...')
@@ -518,9 +518,10 @@ def name2gene(name_string):
 		score = 0
 		score += difflib.SequenceMatcher(None, name_string, gene['des'].lower()).ratio()
 		score += difflib.SequenceMatcher(None, name_string, gene['symbol'].lower()).ratio()
+		# print(gene['des'], gene['symbol'], score)
 		if score > 0.6:
 			match_score[gene['geneid']] = score
-	if match_score != {}:
+	if len(match_score) > 0:
 		best_id = max(match_score.keys(), key=(lambda key: match_score[key]))
 		best_gene = gene_info[best_id]
 	return best_gene
@@ -546,4 +547,4 @@ if __name__ == '__main__':
 	# logger.info(name2gene('signal+transducer+and+activator+of+transcription+1'))
 	# logger.info(name2gene('stat1'))
 	# logger.info(name2gene('cytochrome b mitochondrion'))
-	logger.info(name2gene('syntaxin binding protein 2'))
+	logger.info(name2gene('sodium channel subunit beta 4'))
