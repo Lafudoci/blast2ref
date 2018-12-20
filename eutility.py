@@ -1,6 +1,8 @@
+import difflib
 import json
 import time
 import requests
+import re
 import xml.etree.ElementTree as ET
 
 import logging
@@ -23,7 +25,7 @@ class EutilsAPI:
 		self.fetch_api = self.base_url + "efetch.fcgi?db=%s&id=%s&retmode=%s&rettype=%s"
 		self.citmatch_api = self.base_url + "ecitmatch.cgi?retmode=json&db=pubmed&retmode=xml&bdata=%s"
 		self.link_api = self.base_url + "elink.fcgi?retmode=json&dbfrom=%s&db=%s%s"
-	def request(delf, url, *args):
+	def request(self, url, *args):
 		global last_call_time
 		# add api key
 		url += "&api_key=" + ncbi_api_key
@@ -486,15 +488,43 @@ def pubmed_parser(pubmed_id):
 
 def name2gene(name_string):
 	gene_info = {}
+	match_score = {}
+	best_gene = {}
 	api = EutilsAPI()
-	resp = api.search('gene',name_string)
-	top_hit_id = json.loads(resp.text)['esearchresult']['idlist'][0]
-	resp = api.summary('gene', top_hit_id)
-	result = json.loads(resp.text)['result']
-	gene_info['uid'] = result[top_hit_id]['uid']
-	gene_info['name'] = result[top_hit_id]['name']
-	gene_info['des'] = result[top_hit_id]['description']
-	return gene_info
+	while(True):
+		name_string = name_string.lower().replace(' ', '+')
+		resp = api.search('gene',name_string+'+homo+sapiens')
+		search_results = json.loads(resp.text).get('esearchresult',-1).get('idlist',-1)
+		if search_results == -1:
+			logger.warning('Could not parse esearchresult. Retrying...')
+			time.sleep(3)
+		elif len(search_results) == 0:
+			gene_info = {}
+			break
+		else:
+			top_ids = ','.join(search_results)
+			resp = api.summary('gene', top_ids)
+			summary_results = json.loads(resp.text)['result']
+			return_uids = summary_results.get('uids','')
+			for uid in return_uids:
+				gene_info[uid] = {}
+				gene_info[uid]['geneid'] = summary_results[uid]['uid']
+				gene_info[uid]['symbol'] = summary_results[uid]['name']
+				gene_info[uid]['des'] = summary_results[uid]['description']
+			break
+	
+	# Score the similarity between name_string and returned gene names
+	for gene in gene_info.values():
+		score = 0
+		score += difflib.SequenceMatcher(None, name_string, gene['des'].lower()).ratio()
+		score += difflib.SequenceMatcher(None, name_string, gene['symbol'].lower()).ratio()
+		if score > 0.6:
+			match_score[gene['geneid']] = score
+	if match_score != {}:
+		best_id = max(match_score.keys(), key=(lambda key: match_score[key]))
+		best_gene = gene_info[best_id]
+	return best_gene
+
 
 if __name__ == '__main__':
 	# acc = 'AGT62457.1'
@@ -513,4 +543,7 @@ if __name__ == '__main__':
 
 	# logger.info(pubmed_parser(23954694))
 
-	logger.info(name2gene('vesicle+associated+membrane+protein+2+homo+sapiens'))
+	# logger.info(name2gene('signal+transducer+and+activator+of+transcription+1'))
+	# logger.info(name2gene('stat1'))
+	# logger.info(name2gene('cytochrome b mitochondrion'))
+	logger.info(name2gene('syntaxin binding protein 2'))
