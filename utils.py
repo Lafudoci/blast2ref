@@ -22,5 +22,10 @@ def dump_json_file(dict, path):
 	with open(path, 'w') as f:
 		json.dump(dict, f)
 
+def load_json_file(path):
+	with open(path, 'r') as f:
+		json_dict = json.load(f)
+	return json_dict
+
 if __name__ == '__main__':
 	print_logo('0.1.0')
