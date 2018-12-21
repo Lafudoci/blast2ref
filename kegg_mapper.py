@@ -16,10 +16,12 @@ def name_clean(name_string):
 	name = name.replace('(', '')
 	name = name.replace(')', '').strip()
 	name = name.replace('PREDICTED:', '').strip()
+	name = name.replace('#', '')
 	name = name.replace('-', ' ')
 	name = name.replace(':', ' ')
 	name = name.replace('=', ' ')
 	name = name.replace(' ', ' ')
+
 	return name
 
 def write_acc_gene_tsv(path, acc_gene):
@@ -79,7 +81,10 @@ def gene2kegg(gene_id):
 	return kegg
 	
 
-def mapper(hits):
+def mapper(name_prefix):
+
+	hits = utils.load_json_file(name_prefix+'_enriched.cache')
+
 	gene_dict = {}
 	query_history = {}
 	acc_gene = {}
@@ -95,6 +100,7 @@ def mapper(hits):
 				gene_dict[acc] = {'origin': name_clean(values['title'])}
 
 	# run name2gene
+	i = 0
 	for acc, values in gene_dict.items():
 		if values['origin'] != '':
 			if acc not in acc_gene.keys():
@@ -114,6 +120,12 @@ def mapper(hits):
 				gene_dict[acc]['gene'] = acc_gene[acc]
 		else:
 			gene_dict[acc]['gene'] = {}
+		if i == 500:
+			utils.dump_json_file(acc_gene, 'acc_gene.table')
+			write_acc_gene_tsv('acc_gene.tsv',acc_gene)
+			i = 0
+		else:
+			i += 1
 	
 	utils.dump_json_file(acc_gene, 'acc_gene.table')
 	write_acc_gene_tsv('acc_gene.tsv',acc_gene)
@@ -123,6 +135,4 @@ def mapper(hits):
 	return gene_dict
 
 if __name__ == '__main__':
-	hits = utils.load_json_file('(test)blast2ref_cluster2_blastx_nr_seq1_1e-6.tsv.cache')
-	# hits = utils.load_json_file('blast2ref_test10.tsv.cache')
-	mapper(hits)
+	mapper('blast2ref_cluster2_nr_seq0_1e3_para')

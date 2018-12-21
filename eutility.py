@@ -494,24 +494,27 @@ def name2gene(name_string):
 	while(True):
 		name_string = name_string.lower().replace(' ', '+')
 		resp = api.search('gene',name_string)
-		search_results = json.loads(resp.text).get('esearchresult',-1).get('idlist',-1)
-		if search_results == -1:
-			logger.warning('Could not parse esearchresult. Retrying...')
-			time.sleep(3)
-		elif len(search_results) == 0:
-			gene_info = {}
-			break
-		else:
-			top_ids = ','.join(search_results)
-			resp = api.summary('gene', top_ids)
-			summary_results = json.loads(resp.text)['result']
-			return_uids = summary_results.get('uids','')
-			for uid in return_uids:
-				gene_info[uid] = {}
-				gene_info[uid]['geneid'] = summary_results[uid]['uid']
-				gene_info[uid]['symbol'] = summary_results[uid]['name']
-				gene_info[uid]['des'] = summary_results[uid]['description']
-			break
+		try:
+			search_results = json.loads(resp.text).get('esearchresult',-1).get('idlist',-1)
+			if search_results == -1:
+				logger.warning('Could not parse esearchresult. Retrying...')
+				time.sleep(3)
+			elif len(search_results) == 0:
+				gene_info = {}
+				break
+			else:
+				top_ids = ','.join(search_results)
+				resp = api.summary('gene', top_ids)
+				summary_results = json.loads(resp.text)['result']
+				return_uids = summary_results.get('uids','')
+				for uid in return_uids:
+					gene_info[uid] = {}
+					gene_info[uid]['geneid'] = summary_results[uid]['uid']
+					gene_info[uid]['symbol'] = summary_results[uid]['name']
+					gene_info[uid]['des'] = summary_results[uid]['description']
+				break
+		except json.decoder.JSONDecodeError as err:
+			logger.warning(err)
 	
 	# Score the similarity between name_string and returned gene names
 	for gene in gene_info.values():

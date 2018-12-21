@@ -1,5 +1,5 @@
 import json
-
+import csv
 import utils
 
 import logging
@@ -9,19 +9,9 @@ logging.basicConfig(format='[%(asctime)s] [%(levelname)s] %(message)s', level=lo
 import configparser
 config = configparser.ConfigParser()
 config.read('config.ini')
-de_profile = config['DE_FILTER']['PROFILE'].lower()
-de_level = config['edgeR_PROFILE']['DE_Level'].lower()
-max_pvalue = float(config['edgeR_PROFILE']['MAX_PValue'])
-max_fdr = float(config['edgeR_PROFILE']['MAX_FDR'])
-min_logcpm = float(config['edgeR_PROFILE']['MIN_logCPM'])
-abs_min_logfc = float(config['edgeR_PROFILE']['ABS_MIN_logFC'])
+fasta_path =  config['DENOVO_FASTA']['PATH']
 
 trinity_fasta = {}
-
-fasta_path =  r'D:\2017NGS\lbr2_trinity\Trinity.fasta'
-de_result_path = r'D:\2017NGS\rsem\edgeR_results\RSEM.gene.counts.matrix.control_vs_early.edgeR.DE_results'
-
-fasta_output_path = r'filtered_seq.fasta'
 
 def read_fasta(fasta_path):
 	logger.info('Loading '+ str(fasta_path))
@@ -53,12 +43,12 @@ def read_fasta(fasta_path):
 	logger.info('Loaded seqs: '+ str(len(trinity_fasta)))
 	return trinity_fasta
 
-def read_de_edger():
+def read_de_edger(de_file):
 	i = 0
 	header = []
 	de_dict = {}
-	logger.info('Loading '+ str(de_result_path))
-	with open (de_result_path, 'r') as f:
+	logger.info('Loading '+ str(de_file))
+	with open (de_file, 'r') as f:
 		for line in f.readlines():
 			# get header
 			if i == 0:
@@ -120,41 +110,64 @@ def de_seq_extract_edger(fasta, de_list):
 
 	return de_seq
 
-def de_cache_edger(de_dict, de_list):
+def de_cache_edger(de_dict, de_list, output_prefix):
 	cache = {}
-	logger.debug('Writing DE seq cache...')
+	name = output_prefix + '_deseq'
+	logger.debug('Writing DE seq cache: ' + name)
 	for sid, value in de_dict.items():
 		if sid in de_list:
 			cache[sid] = value
-	with open ('deseq.cache', 'w') as f:
+	with open (name+'.cache', 'w') as f:
 		f.write(json.dumps(cache))
 
-	utils.write_de_tsv('deseq.tsv',cache)
+	write_de_tsv(name, cache)
+
+def write_de_tsv(name, de_dict):
+	colnames = []
+	for de in de_dict.values():
+		for header in de.keys():
+			colnames.append(header)
+		break
+	with open (name+'.tsv', 'w', newline="\n") as tsvfile:
+		writer = csv.DictWriter(tsvfile, fieldnames=colnames, delimiter='\t')
+		writer.writeheader()
+		for de in de_dict.values():
+			writer.writerow(de)
 
 
-
-def write_fasta(seq_dict, path):
-	logger.info('Writing DE seq to fasta file: '+ path)
-	with open(path, 'w') as f:
+def write_fasta(seq_dict, prefix):
+	file_name = prefix+'_filtered.fasta'
+	logger.info('Writing DE seq to: ' + file_name)
+	with open(file_name, 'w') as f:
 		for sid, seq in seq_dict.items():
 			f.write('>'+sid+'\n'+seq+'\n')
-	logger.info('The fasta file was built.')
+	logger.info('The filtered fasta file was built.')
 
-def deseq_extractor():
+def deseq_extractor(de_profile, de_file, fasta_output_prefix):
 	# read fasta
 	fasta_dict = read_fasta(fasta_path)
 
 	# read DE results
 	if de_profile == 'edger':
 		logger.info('DE profile: edgeR')
-		de_dict = read_de_edger()
+		global de_level
+		global max_pvalue
+		global max_fdr
+		global min_logcpm
+		global abs_min_logfc
+		de_level = config['edgeR_PROFILE']['DE_Level'].lower()
+		max_pvalue = float(config['edgeR_PROFILE']['MAX_PValue'])
+		max_fdr = float(config['edgeR_PROFILE']['MAX_FDR'])
+		min_logcpm = float(config['edgeR_PROFILE']['MIN_logCPM'])
+		abs_min_logfc = float(config['edgeR_PROFILE']['ABS_MIN_logFC'])
+		
+		de_dict = read_de_edger(de_file)
 		filtered_de_list = de_filter_edger(de_dict)
-		de_cache_edger(de_dict, filtered_de_list)
-		# de_tsv_edger()
+		de_cache_edger(de_dict, filtered_de_list, fasta_output_prefix)
 
 		# extract DE seq
 		de_seq = de_seq_extract_edger(fasta_dict, filtered_de_list)
-		write_fasta(de_seq, fasta_output_path)
+		write_fasta(de_seq, fasta_output_prefix)
 
 	else:
 		logger.warning('Unknown DE profile: '+ de_profile)
@@ -162,4 +175,4 @@ def deseq_extractor():
 
 
 if __name__ == '__main__':
-	deseq_extractor()
+	deseq_extractor('edger', 'GH2GH3.DE_results', 'filtered_seq_test')

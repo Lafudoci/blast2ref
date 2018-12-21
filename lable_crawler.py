@@ -104,7 +104,7 @@ def hits_enrich(hits, cache_interval, out):
 def chache2hits(out):
 	cache = {}
 	try:
-		with open(out+'.cache', 'r') as f:
+		with open(out+'_enrich.cache', 'r') as f:
 			cache = json.load(f)
 		logger.debug('Hits cache exists. Continuing previous job.')
 		return cache
@@ -114,19 +114,19 @@ def chache2hits(out):
 	
 
 def hits2cache(hits, out):
-	with open(out+'.cache', 'w') as f:
+	with open(out+'_enrich.cache', 'w') as f:
 		logger.info('Writing cache')
 		json.dump(hits, f)
 
-def cache2tsv(path, out):
-	logger.info('Loading '+path)
-	with open(path, 'r') as f:
+def cache2tsv(file_name, out):
+	logger.info('Loading '+ file_name + '.cache')
+	with open(file_name+'_enrich.cache', 'r') as f:
 		hits = json.load(f)
 	logger.info('Writing tsv file...')
 	write_tsv(out, 'w', hits)
 
-def write_tsv(path, mode, hits):
-	with open (path, mode, newline="\n") as tsvfile:
+def write_tsv(out, mode, hits):
+	with open (out+'_enrich.tsv', mode, newline="\n") as tsvfile:
 		colnames = ['qid','sid','pident','evalue','score','uid','title','gi','tax_id','tax_name','lineage','pubmed','mesh_major','mesh_all', 'mesh_detail','status']
 		writer = csv.DictWriter(tsvfile, fieldnames=colnames, delimiter='\t')
 		writer.writeheader()
@@ -135,20 +135,7 @@ def write_tsv(path, mode, hits):
 				row_dict = {'qid':qid, 'sid':bioseq[0], **bioseq[1]}
 				writer.writerow(row_dict)
 
-def write_de_tsv(path, de_dict):
-	colnames = []
-	for de in de_dict.values():
-		for header in de.keys():
-			colnames.append(header)
-		break
-	with open (path, 'w', newline="\n") as tsvfile:
-		writer = csv.DictWriter(tsvfile, fieldnames=colnames, delimiter='\t')
-		writer.writeheader()
-		for de in de_dict.values():
-			writer.writerow(de)
-
-
 if __name__ == '__main__':
 	hits_dict = read_fmt6('diff_fasta_all_blastx_nr_seq1_head10.fmt6')
-	enrich_hits_dict = hits_enrich(hits_dict, 2, 'blast2ref_test10.tsv')
-	write_tsv('blast2ref_test10.tsv', 'w', enrich_hits_dict)
+	enrich_hits_dict = hits_enrich(hits_dict, 2, 'blast2ref_test10')
+	write_tsv('blast2ref_test10', 'w', enrich_hits_dict)
