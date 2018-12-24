@@ -9,11 +9,9 @@ logging.basicConfig(format='[%(asctime)s] [%(levelname)s] %(message)s', level=lo
 import configparser
 config = configparser.ConfigParser()
 config.read('config.ini')
-fasta_path =  config['DENOVO_FASTA']['PATH']
 
-trinity_fasta = {}
-
-def read_fasta(fasta_path):
+def read_trinity_fasta(fasta_path):
+	trinity_fasta = {}
 	logger.info('Loading '+ str(fasta_path))
 	seq_id = ''
 	with open(fasta_path, 'r') as f:
@@ -112,7 +110,7 @@ def de_seq_extract_edger(fasta, de_list):
 
 def de_cache_edger(de_dict, de_list, output_prefix):
 	cache = {}
-	name = output_prefix + '_deseq'
+	name = output_prefix + '_DEG'
 	logger.debug('Writing DE seq cache: ' + name)
 	for sid, value in de_dict.items():
 		if sid in de_list:
@@ -143,9 +141,10 @@ def write_fasta(seq_dict, prefix):
 			f.write('>'+sid+'\n'+seq+'\n')
 	logger.info('The filtered fasta file was built.')
 
-def deseq_extractor(de_profile, de_file, fasta_output_prefix):
+def deseq_extractor(fasta_path, fasta_source, de_profile, de_file, fasta_output_prefix):
 	# read fasta
-	fasta_dict = read_fasta(fasta_path)
+	if fasta_source == 'trinity':
+		fasta_dict = read_trinity_fasta(fasta_path)
 
 	# read DE results
 	if de_profile == 'edger':

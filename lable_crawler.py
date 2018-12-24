@@ -127,7 +127,14 @@ def cache2tsv(file_name, out):
 
 def write_tsv(out, mode, hits):
 	with open (out+'_enrich.tsv', mode, newline="\n") as tsvfile:
-		colnames = ['qid','sid','pident','evalue','score','uid','title','gi','tax_id','tax_name','lineage','pubmed','mesh_major','mesh_all', 'mesh_detail','status']
+		colnames = ['qid','sid',
+					'pident','evalue','score',
+					'uid','title','gi',
+					'tax_id','tax_name','lineage',
+					'pubmed','mesh_major','mesh_all', 'mesh_detail',
+					'status','geneid','symbol','des',
+					'keggid','keggko','keggmap'
+		]
 		writer = csv.DictWriter(tsvfile, fieldnames=colnames, delimiter='\t')
 		writer.writeheader()
 		for qid, subj in hits.items():
@@ -136,6 +143,6 @@ def write_tsv(out, mode, hits):
 				writer.writerow(row_dict)
 
 if __name__ == '__main__':
-	hits_dict = read_fmt6('diff_fasta_all_blastx_nr_seq1_head10.fmt6')
+	hits_dict = read_fmt6('blast2ref_test10_filtered.fmt6')
 	enrich_hits_dict = hits_enrich(hits_dict, 2, 'blast2ref_test10')
 	write_tsv('blast2ref_test10', 'w', enrich_hits_dict)

@@ -88,7 +88,7 @@ def gene2kegg(gene_id):
 
 def mapper(name_prefix):
 
-	hits = utils.load_json_file(name_prefix+'_enriched.cache')
+	hits = utils.load_json_file(name_prefix+'_enrich.cache')
 
 	gene_dict = {}
 	query_history = {}
@@ -135,9 +135,7 @@ def mapper(name_prefix):
 	utils.dump_json_file(acc_gene, 'acc_gene.table')
 	write_acc_gene_tsv('acc_gene.tsv',acc_gene)
 
-	print(gene_dict)
-
 	return gene_dict
 
 if __name__ == '__main__':
-	mapper('blast2ref_cluster2_nr_seq0_1e3_para')
+	mapper('blast2ref_test10_swissprot')
