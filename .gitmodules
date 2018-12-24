@@ -1,0 +1,3 @@
+[submodule "blast_batch_helper"]
+	path = blast_batch_helper
+	url = https://github.com/Lafudoci/BLAST-batch-helper.git
