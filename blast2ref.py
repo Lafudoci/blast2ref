@@ -30,6 +30,9 @@ argp = argparse.parse_args()
 
 def deseq_ex():
 	if argp.fasta_file and argp.de_result and argp.de_profile and argp.output_prefix:
+		if  os.path.exists(argp.output_prefix+'_filtered.fasta'):
+			logger.info('Filtered fasta exists, skipping deseq extraction.')
+			return True
 		if argp.de_profile == 'edger':
 			deseq_extractor.deseq_extractor(argp.fasta_file, argp.fasta_source, 'edger', argp.de_result, argp.output_prefix)
 		return True
