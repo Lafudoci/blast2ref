@@ -8,19 +8,24 @@ logging.basicConfig(format='[%(asctime)s] [%(levelname)s] %(message)s', level=lo
 
 
 def name_clean(name_string):
-	# remove tax and isoform
-	name = name_string.split('[')[0].strip().split('isoform')[0].strip()
-	# remove specific string
-	name = name.replace('-like', '')
-	name = name.replace(', partial', '')
-	name = name.replace('(', '')
-	name = name.replace(')', '').strip()
-	name = name.replace('PREDICTED:', '').strip()
-	name = name.replace('#', '')
-	name = name.replace('-', ' ')
-	name = name.replace(':', ' ')
-	name = name.replace('=', ' ')
-	name = name.replace(' ', ' ')
+	# clean uniprot record name
+	if name_string.startswith('RecName: Full='):
+		name = name_string.replace('RecName: Full=', '').split(';')[0].strip()
+		name = name.replace(',', '')
+	else:
+		# remove tax and isoform
+		name = name_string.split('[')[0].strip().split('isoform')[0].strip()
+		# remove specific string
+		name = name.replace('-like', '')
+		name = name.replace(', partial', '')
+		name = name.replace('(', '')
+		name = name.replace(')', '').strip()
+		name = name.replace('PREDICTED:', '').strip()
+		name = name.replace('#', '')
+		name = name.replace('-', ' ')
+		name = name.replace(':', ' ')
+		name = name.replace('=', ' ')
+		name = name.replace(' ', ' ')
 
 	return name
 
