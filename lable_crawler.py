@@ -99,7 +99,8 @@ def hits_enrich(hits, cache_interval, out):
 				i+=1
 
 	hits2cache(hits, out)
-	return hits
+	write_tsv(out+'_enrich', 'w', hits)
+	# return hits
 
 def chache2hits(out):
 	cache = {}
@@ -126,7 +127,7 @@ def cache2tsv(file_name, out):
 	write_tsv(out, 'w', hits)
 
 def write_tsv(out, mode, hits):
-	with open (out+'_enrich.tsv', mode, newline="\n") as tsvfile:
+	with open (out+'.tsv', mode, newline="\n") as tsvfile:
 		colnames = ['qid','sid',
 					'pident','evalue','score',
 					'uid','title','gi',
@@ -143,6 +144,5 @@ def write_tsv(out, mode, hits):
 				writer.writerow(row_dict)
 
 if __name__ == '__main__':
-	hits_dict = read_fmt6('blast2ref_test10_filtered.fmt6')
-	enrich_hits_dict = hits_enrich(hits_dict, 2, 'blast2ref_test10')
-	write_tsv('blast2ref_test10', 'w', enrich_hits_dict)
+	hits_dict = read_fmt6('blast2ref_test10_nr_filtered.fmt6')
+	enrich_hits_dict = hits_enrich(hits_dict, 2, 'blast2ref_test10_nr')

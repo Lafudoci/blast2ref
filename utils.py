@@ -1,3 +1,4 @@
+import csv
 import json
 import time
 import requests
@@ -40,6 +41,19 @@ def http_get(url):
 				time.sleep(3)
 		except requests.exceptions.RequestException as err:
 			logger.warning(err)
+
+def write_final_tsv(out, mode, hits):
+	with open (out+'.tsv', mode, newline="\n") as tsvfile:
+		colnames = ['qid']
+		for qid, subj in hits.items():
+			for field, val in subj.items():
+				colnames.append(field)
+			break
+		writer = csv.DictWriter(tsvfile, fieldnames=colnames, delimiter='\t')
+		writer.writeheader()
+		for qid, subj in hits.items():
+				subj['qid'] = qid
+				writer.writerow(subj)
 
 if __name__ == '__main__':
 	print_logo('0.1.0')

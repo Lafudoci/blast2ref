@@ -1,6 +1,7 @@
 import csv
 import eutility
 import utils
+import lable_crawler
 
 import logging
 logger = logging.getLogger(__name__)
@@ -12,6 +13,7 @@ def name_clean(name_string):
 	if name_string.startswith('RecName: Full='):
 		name = name_string.replace('RecName: Full=', '').split(';')[0].strip()
 		name = name.replace(',', '')
+		name = name.replace('-', ' ')
 	else:
 		# remove tax and isoform
 		name = name_string.split('[')[0].strip().split('isoform')[0].strip()
@@ -26,7 +28,6 @@ def name_clean(name_string):
 		name = name.replace(':', ' ')
 		name = name.replace('=', ' ')
 		name = name.replace(' ', ' ')
-
 	return name
 
 def write_acc_gene_tsv(path, acc_gene):
@@ -104,7 +105,7 @@ def mapper(name_prefix):
 			if acc not in gene_dict.keys():
 				gene_dict[acc] = {'origin': name_clean(values['title'])}
 
-	# run name2gene
+	# run name2gene & gene2kegg
 	i = 0
 	for acc, values in gene_dict.items():
 		if values['origin'] != '':
@@ -131,11 +132,25 @@ def mapper(name_prefix):
 			i = 0
 		else:
 			i += 1
-	
+
+	# write gene & kegg info back to hits
+	hits_ko = hits
+	for qid, accs in hits.items():
+		for acc, values in accs.items():
+			hits_ko[qid][acc] = {**hits_ko[qid][acc] , **gene_dict[acc]['gene']}
+
+	utils.dump_json_file(gene_dict, name_prefix+'_kogene.cache')
+	lable_crawler.write_tsv(name_prefix+'_enrich_kogene','w',hits_ko)
+
 	utils.dump_json_file(acc_gene, 'acc_gene.table')
 	write_acc_gene_tsv('acc_gene.tsv',acc_gene)
 
+	# print(gene_dict)
 	return gene_dict
 
 if __name__ == '__main__':
-	mapper('blast2ref_test10_swissprot')
+	mapper('test-nr')
+
+	# name = name_clean('RecName: Full=Hemoglobin subunit beta 2; AltName: Full=Beta-2-globin; AltName: Full=Hemoglobin beta-2 chain')
+	# gene_info = eutility.name2gene(name)
+	# print(gene_info)

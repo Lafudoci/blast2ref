@@ -1,4 +1,5 @@
 import deseq_extractor
+import deseq_represent
 import eutility
 import kegg_mapper
 import lable_crawler
@@ -28,6 +29,12 @@ argparse.add_argument('-c','--cache_file', help="Prefix of Blast2Ref .cache file
 argparse.add_argument('-out','--output_prefix', help="Prefix of Blast2Ref results output.")
 argp = argparse.parse_args()
 
+import configparser
+config = configparser.ConfigParser()
+config.read('config.ini')
+
+max_target_seqs = config['BLAST_PARAMETERS']['MAX_TARGET_SEQS']
+
 def deseq_ex():
 	if argp.fasta_file and argp.de_result and argp.de_profile and argp.output_prefix:
 		if  os.path.exists(argp.output_prefix+'_filtered.fasta'):
@@ -44,7 +51,7 @@ def run_blast():
 	query_string = argp.output_prefix+'_filtered.fasta'
 	if os.path.exists(query_string):
 		out_string = argp.output_prefix +'_' + argp.blast_db + '_filtered.fmt6'
-		others_string = '-task blastx-fast -evalue 1e-3 -remote'
+		others_string = '-task blastx-fast -max_target_seqs %s -evalue 1e-3 -remote'% max_target_seqs
 		cmd = ["blastx", "-db", argp.blast_db, "-query", query_string, "-out", out_string, "-others", others_string]
 		subprocess.run([sys.executable, py] + cmd)
 		if os.path.exists(out_string):
@@ -68,32 +75,20 @@ def cache2tsv():
 		logger.warning('Error, lack of necessary args.')
 
 def acc2ref():
-	if argp.output_prefix:
+	if argp.output_prefix and argp.blast_db:
+		out_n_db_name = argp.output_prefix +'_'+ argp.blast_db
 		# Read blast result to hits dict
 		if argp.blast_format == 'fmt6':
 			logger.info('Reading blast output from fmt6 file.')
-			hits_dict = lable_crawler.read_fmt6(argp.output_prefix +'_'+ argp.blast_db + '_filtered.fmt6')
+			hits_dict = lable_crawler.read_fmt6(out_n_db_name + '_filtered.fmt6')
 		else:
 			logger.warning('Unknow file format.')
 		# Enrich hits dict with mesh
-		enrich_hits_dict = lable_crawler.hits_enrich(hits_dict, 500, argp.output_prefix+'_'+ argp.blast_db)
-		# Format hits dict into tsv
-		logger.info('Writing result to file.')
-		lable_crawler.write_tsv(argp.output_prefix+'_'+ argp.blast_db, 'w', enrich_hits_dict)
-
-		gene_dict = kegg_mapper.mapper(argp.output_prefix +'_'+ argp.blast_db)
-
-		temp_dict = enrich_hits_dict
-		for qid, accs in temp_dict.items():
-			for acc, values in accs.items():
-				enrich_hits_dict[qid][acc]['geneid'] = gene_dict.get(acc,{}).get('gene',{}).get('geneid',{})
-				enrich_hits_dict[qid][acc]['symbol'] = gene_dict.get(acc,{}).get('gene',{}).get('symbol',{})
-				enrich_hits_dict[qid][acc]['des'] = gene_dict.get(acc,{}).get('gene',{}).get('des',{})
-				enrich_hits_dict[qid][acc]['keggid'] = gene_dict.get(acc,{}).get('gene',{}).get('keggid',{})
-				enrich_hits_dict[qid][acc]['keggko'] = gene_dict.get(acc,{}).get('gene',{}).get('keggko',{})
-				enrich_hits_dict[qid][acc]['keggmap'] = gene_dict.get(acc,{}).get('gene',{}).get('keggmap',{})
-
-		lable_crawler.write_tsv(argp.output_prefix+'_'+ argp.blast_db+'_kegg', 'w', enrich_hits_dict)
+		lable_crawler.hits_enrich(hits_dict, 500, out_n_db_name)
+		# Enrich hits dict with kegg
+		kegg_mapper.mapper(out_n_db_name)
+		# Represent all qid
+		deseq_represent.represent(out_n_db_name)
 
 		return True
 	else:
