@@ -75,23 +75,23 @@ def hits_enrich(hits, cache_interval, out):
 					hits[qid][acc]['tax_name'] = record.source.get('tax_name','')
 					hits[qid][acc]['lineage'] = record.source.get('lineage','')
 					hits[qid][acc]['pubmed'] = record.pmids
-					hits[qid][acc]['mesh_major'] = record.mesh.get('major','')
-					hits[qid][acc]['mesh_all'] = record.mesh.get('all','')
-					hits[qid][acc]['mesh_detail'] = record.mesh.get('detail','')
+					hits[qid][acc]['mesh_major'] = record.mesh.get('major',[])
+					hits[qid][acc]['mesh_all'] = record.mesh.get('all',[])
+					hits[qid][acc]['mesh_detail'] = record.mesh.get('detail',{})
 					hits[qid][acc]['status'] = record.resp
 					id_cache[acc] = qid
 				else:
 					logger.info('Found acc previous results from '+ id_cache[acc])
-					hits[qid][acc]['uid'] = hits[id_cache[acc]][acc].get('uid','')
+					hits[qid][acc]['uid'] = hits[id_cache[acc]][acc].get('uid',[])
 					hits[qid][acc]['title'] = hits[id_cache[acc]][acc].get('title','')
 					hits[qid][acc]['gi'] = hits[id_cache[acc]][acc].get('gi','')
 					hits[qid][acc]['tax_id'] = hits[id_cache[acc]][acc].get('tax_id','')
 					hits[qid][acc]['tax_name'] = hits[id_cache[acc]][acc].get('tax_name','')
 					hits[qid][acc]['lineage'] = hits[id_cache[acc]][acc].get('lineage','')
-					hits[qid][acc]['pubmed'] = hits[id_cache[acc]][acc].get('pubmed','')
-					hits[qid][acc]['mesh_major'] = hits[id_cache[acc]][acc].get('mesh_major','')
-					hits[qid][acc]['mesh_all'] = hits[id_cache[acc]][acc].get('mesh_all','')
-					hits[qid][acc]['mesh_detail'] = hits[id_cache[acc]][acc].get('mesh_detail','')
+					hits[qid][acc]['pubmed'] = hits[id_cache[acc]][acc].get('pubmed',[])
+					hits[qid][acc]['mesh_major'] = hits[id_cache[acc]][acc].get('mesh_major',[])
+					hits[qid][acc]['mesh_all'] = hits[id_cache[acc]][acc].get('mesh_all',[])
+					hits[qid][acc]['mesh_detail'] = hits[id_cache[acc]][acc].get('mesh_detail',{})
 					hits[qid][acc]['status'] = hits[id_cache[acc]][acc].get('status','')
 				if i == cache_interval:
 					hits2cache(hits, out)

@@ -2,6 +2,7 @@ import csv
 import eutility
 import utils
 import lable_crawler
+import os
 
 import logging
 logger = logging.getLogger(__name__)
@@ -35,8 +36,8 @@ def write_acc_gene_tsv(path, acc_gene):
 	with open (path, 'w', newline="\n") as tsvfile:
 		writer = csv.DictWriter(tsvfile, fieldnames=colnames, delimiter='\t')
 		writer.writeheader()
-		for acc, val in acc_gene.items():
-			val['acc'] = acc
+		for acc, gene in acc_gene.items():
+			val = {'acc':acc, **gene}
 			writer.writerow(val)
 
 def kegg_id_api(operation, identifer):
@@ -89,67 +90,77 @@ def gene2kegg(gene_id):
 
 def mapper(name_prefix):
 
-	hits = utils.load_json_file(name_prefix+'_enrich.cache')
+	if not os.path.exists(name_prefix+'_kogene.cache'):
+		hits = utils.load_json_file(name_prefix+'_enrich.cache')
 
-	gene_dict = {}
-	query_history = {}
-	acc_gene = {}
-	try:
-		acc_gene = utils.load_json_file('acc_gene.table')
-	except FileNotFoundError:
-		logger.debug('Acc-gene table not found, creating new.')
+		gene_dict = {}
+		query_history = {}
+		acc_gene = {}
+		try:
+			logger.debug('Loading Acc-gene table')
+			acc_gene = utils.load_json_file('acc_gene.table')
+		except FileNotFoundError:
+			logger.debug('Acc-gene table not found, creating new.')
 
-	# prepare query for name2gene
-	for qid, accs in hits.items():
-		for acc, values in accs.items():
-			if acc not in gene_dict.keys():
-				gene_dict[acc] = {'origin': name_clean(values['title'])}
+		# temp workaroud to remove acc field in accgene table
+		for acc, gene in acc_gene.items():
+			if 'acc' in gene:
+				print('popping')
+				gene.pop('acc')
 
-	# run name2gene & gene2kegg
-	i = 0
-	for acc, values in gene_dict.items():
-		if values['origin'] != '':
-			if acc not in acc_gene.keys():
-				if values['origin'] not in query_history.keys():
-					gene_info = eutility.name2gene(values['origin'])
-					kegg_info = gene2kegg(gene_info.get('geneid', ''))
-					query_history[values['origin']] = [gene_info, kegg_info]
+		# prepare query for name2gene
+		for qid, accs in hits.items():
+			for acc, values in accs.items():
+				if acc not in gene_dict.keys():
+					gene_dict[acc] = {'origin': name_clean(values['title'])}
+
+		# run name2gene & gene2kegg
+		i = 0
+		for acc, values in gene_dict.items():
+			if values['origin'] != '':
+				if acc not in acc_gene.keys():
+					if values['origin'] not in query_history.keys():
+						gene_info = eutility.name2gene(values['origin'])
+						kegg_info = gene2kegg(gene_info.get('geneid', ''))
+						query_history[values['origin']] = [gene_info, kegg_info]
+					else:
+						logger.debug('Name was already Searched.')
+						gene_info = query_history[values['origin']][0]
+						kegg_info = query_history[values['origin']][1]
+					# merge gene & kegg dict
+					acc_gene[acc] = {**gene_info,**kegg_info}
+					gene_dict[acc]['gene'] = acc_gene[acc]
+					i += 1
 				else:
-					logger.debug('Name was already Searched.')
-					gene_info = query_history[values['origin']][0]
-					kegg_info = query_history[values['origin']][1]
-				# merge gene & kegg dict
-				acc_gene[acc] = {**gene_info,**kegg_info}
-				gene_dict[acc]['gene'] = acc_gene[acc]
+					# logger.debug('Acc was already in table.')
+					gene_dict[acc]['gene'] = acc_gene[acc]
 			else:
-				logger.debug('Acc was already in table.')
-				gene_dict[acc]['gene'] = acc_gene[acc]
-		else:
-			gene_dict[acc]['gene'] = {}
-		if i == 500:
-			utils.dump_json_file(acc_gene, 'acc_gene.table')
-			write_acc_gene_tsv('acc_gene.tsv',acc_gene)
-			i = 0
-		else:
-			i += 1
+				gene_dict[acc]['gene'] = {}
+			if i == 50:
+				utils.dump_json_file(acc_gene, 'acc_gene.table')
+				write_acc_gene_tsv('acc_gene.tsv',acc_gene)
+				i = 0
 
+		logger.debug('Saving accgene table...')
+		utils.dump_json_file(acc_gene, 'acc_gene.table')
+		write_acc_gene_tsv('acc_gene.tsv',acc_gene)
+		utils.dump_json_file(gene_dict, name_prefix+'_kogene.cache')
+	else:
+		hits = utils.load_json_file(name_prefix+'_enrich.cache')
+		gene_dict = utils.load_json_file(name_prefix+'_kogene.cache')
+
+	logger.debug('Building kogene tsv...')
 	# write gene & kegg info back to hits
-	hits_ko = hits
+	hits_ko = {}
 	for qid, accs in hits.items():
+		hits_ko[qid] = {}
 		for acc, values in accs.items():
-			hits_ko[qid][acc] = {**hits_ko[qid][acc] , **gene_dict[acc]['gene']}
+			hits_ko[qid][acc] = {**hits[qid][acc] , **gene_dict[acc]['gene']}
 
-	utils.dump_json_file(gene_dict, name_prefix+'_kogene.cache')
 	lable_crawler.write_tsv(name_prefix+'_enrich_kogene','w',hits_ko)
 
-	utils.dump_json_file(acc_gene, 'acc_gene.table')
-	write_acc_gene_tsv('acc_gene.tsv',acc_gene)
-
-	# print(gene_dict)
-	return gene_dict
-
 if __name__ == '__main__':
-	mapper('test-nr')
+	mapper('blast2ref_diff_fasta_cluster2_nr')
 
 	# name = name_clean('RecName: Full=Hemoglobin subunit beta 2; AltName: Full=Beta-2-globin; AltName: Full=Hemoglobin beta-2 chain')
 	# gene_info = eutility.name2gene(name)

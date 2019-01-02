@@ -44,11 +44,7 @@ def http_get(url):
 
 def write_final_tsv(out, mode, hits):
 	with open (out+'.tsv', mode, newline="\n") as tsvfile:
-		colnames = ['qid']
-		for qid, subj in hits.items():
-			for field, val in subj.items():
-				colnames.append(field)
-			break
+		colnames = ['qid','pident','hits','geneid','symbol','des','keggid','keggko','keggmap','mesh']
 		writer = csv.DictWriter(tsvfile, fieldnames=colnames, delimiter='\t')
 		writer.writeheader()
 		for qid, subj in hits.items():

@@ -29,6 +29,7 @@ class EutilsAPI:
 		global last_call_time
 		# add api key
 		url += "&api_key=" + ncbi_api_key
+		i = 0
 		while(True):
 			# limit request to e-utils in 8 times/sec
 			while((time.time() - last_call_time) < 0.125):
@@ -36,8 +37,12 @@ class EutilsAPI:
 			try:
 				last_call_time = time.time()
 				resp = requests.get(url=url)
-				if resp.status_code in (200, 400):
+				if (resp.status_code == 200) or (i > 5):
 					return resp
+				elif resp.status_code == 400:
+					logger.warning(str(resp)+', retry in 10 sec.')
+					time.sleep(10)
+					i += 1
 				else:
 					logger.warning(str(resp)+', retry in 5 sec.')
 					time.sleep(5)
@@ -531,14 +536,14 @@ def name2gene(name_string):
 
 
 if __name__ == '__main__':
-	# acc = 'AGT62457.1'
-	# uids = acc2uid(acc)
-	# record = uid2record(acc, uids)
-	# logger.info('source: ' + str(record.source))
-	# logger.info('bioseq: ' + str(record.bioseq))
-	# logger.info('pub: ' + str(record.pub))
-	# logger.info('pmids: ' + str(record.pmids))
-	# logger.info('MeSh: ' + str(record.mesh))
+	acc = 'XP_025759116.1'
+	uids = acc2uid(acc)
+	record = uid2record(acc, uids)
+	logger.info('source: ' + str(record.source))
+	logger.info('bioseq: ' + str(record.bioseq))
+	logger.info('pub: ' + str(record.pub))
+	logger.info('pmids: ' + str(record.pmids))
+	logger.info('MeSh: ' + str(record.mesh))
 
 	# accs = ['CAO01356.1','1713245A','1JC9_A', 'AAA19454']
 	# acclink_pubmed(accs)
@@ -550,4 +555,4 @@ if __name__ == '__main__':
 	# logger.info(name2gene('signal+transducer+and+activator+of+transcription+1'))
 	# logger.info(name2gene('stat1'))
 	# logger.info(name2gene('cytochrome b mitochondrion'))
-	logger.info(name2gene('sodium channel subunit beta 4'))
+	# logger.info(name2gene('sodium channel subunit beta 4'))
