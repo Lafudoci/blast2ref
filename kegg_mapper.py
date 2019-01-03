@@ -52,7 +52,7 @@ def kegg_id_api(operation, identifer):
 	else:
 		logger.warning('operation'+operation+'not found.')
 	
-	resp = utils.http_get(api_url+query_url)
+	resp = utils.https_get(api_url+query_url)
 	if resp.text.startswith(query_url):
 		kegg = resp.text.split('\t')[1].strip()
 	else:
@@ -65,7 +65,7 @@ def kegg_map_api(ko):
 	pathway_list = []
 	api_url = 'rest.kegg.jp/link/pathway/'
 	query_url = str(ko)
-	resp = utils.http_get(api_url+query_url)
+	resp = utils.https_get(api_url+query_url)
 	if resp.text.startswith(query_url):
 		for line in resp.text.splitlines():
 			path_id = line.split('\tpath:')[1].strip()
@@ -160,8 +160,8 @@ def mapper(name_prefix):
 	lable_crawler.write_tsv(name_prefix+'_enrich_kogene','w',hits_ko)
 
 if __name__ == '__main__':
-	mapper('blast2ref_diff_fasta_cluster2_nr')
+	# mapper('blast2ref_diff_fasta_cluster2_nr')
 
-	# name = name_clean('RecName: Full=Hemoglobin subunit beta 2; AltName: Full=Beta-2-globin; AltName: Full=Hemoglobin beta-2 chain')
-	# gene_info = eutility.name2gene(name)
-	# print(gene_info)
+	name = name_clean('RecName: Full=Hemoglobin subunit beta 2; AltName: Full=Beta-2-globin; AltName: Full=Hemoglobin beta-2 chain')
+	gene_info = eutility.name2gene(name)
+	print(gene_info)

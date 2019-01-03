@@ -12,9 +12,8 @@ import configparser
 config = configparser.ConfigParser()
 config.read('config.ini')
 
-de_level = config['edgeR_PROFILE']['DE_Level'].lower()
-
-def represent(out):
+def represent(prefix, db_name):
+	out = prefix + '_' + db_name
 	enriched_hits = utils.load_json_file(out+'_enrich.cache')
 	gene_dict = utils.load_json_file(out+'_kogene.cache')
 	represent_iso = {}
@@ -68,14 +67,36 @@ def represent(out):
 		# mesh
 		counts_dict = mesh_counter(mesh_all)
 		represent_iso[qid]['mesh'] = counts_dict
-		
-	utils.dump_json_file(represent_iso, out+'_represent_isoform.cache')
-	utils.write_final_tsv(out+'_represent_isoform', 'w', represent_iso)
 
+	utils.dump_json_file(represent_iso, out+'_represent_isoform.cache')
+
+	# Read DEG cache
+	de_dict = utils.load_json_file(prefix+'_DEG.cache')
+	
+	# Verify DE_level
+	for qid in de_dict.keys():
+		if qid.split('_')[-1].startswith('g'):
+			de_level = 'gene'
+			break
+		elif qid.split('_')[-1].startswith('i'):
+			de_level = 'isoform'
+			break
+		else:
+			logger.warning('Can not recognize DE level.')
+			de_level = ''
+			break
+
+	# if de level is gene then represent again, and append DEG data.
 	if de_level == 'gene':
+		# utils.write_final_tsv(out+'_represent_isoform', 'w', represent_iso)
 		represent_gene = iso2gene_represent(represent_iso)
-		utils.dump_json_file(represent_gene, out+'_represent_gene.cache')
-		utils.write_final_tsv(out+'_represent_gene', 'w', represent_gene)
+		represent_deg = append_deg(prefix, represent_gene, de_dict)
+		utils.dump_json_file(represent_deg, out+'_represent_gene.cache')
+		utils.write_final_tsv(out+'_represent_gene', 'w', represent_deg)
+	elif de_level == 'isoform':
+		utils.write_final_tsv(out+'_represent_isoform', 'w', represent_iso)
+	else:
+		logger.warning('Can not recognize DE level.')
 
 def iso2gene_represent(represent_iso):
 	all_geneid = {}
@@ -86,7 +107,7 @@ def iso2gene_represent(represent_iso):
 	for qid, gene in represent_iso.items():
 		if gene.get('geneid') and (gene.get('geneid') not in all_geneid):
 			all_geneid[gene['geneid']] = dict(gene)
-			all_geneid[gene['geneid']].pop('qid')
+			# all_geneid[gene['geneid']].pop('qid')
 			all_geneid[gene['geneid']].pop('geneid')
 			all_geneid[gene['geneid']].pop('hits')
 			all_geneid[gene['geneid']].pop('pident')
@@ -132,6 +153,13 @@ def iso2gene_represent(represent_iso):
 
 	return represent_gene
 
+def append_deg(prefix, represent_dict, de_dict):
+	represent_deg = {}
+	for qid, represent in represent_dict.items():
+		represent_deg[qid] = {**represent_dict[qid], **de_dict[qid]}
+	return represent_deg
+
+
 def tax_simility(lineage, target_lineage):
 	lineage_list = lineage.strip().split(';')
 	target_lineage_list = target_lineage.strip().split(';')
@@ -165,5 +193,5 @@ def mesh_counter(mesh_lists):
 		
 
 if __name__ == '__main__':
-	represent('blast2ref_diff_fasta_cluster2_nr')
+	represent('blast2ref_diff_fasta_cluster2', 'nr')
 	

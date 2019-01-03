@@ -20,17 +20,17 @@ def print_logo(version):
 ============================================="%(version)
 	print(logo)
 
-def dump_json_file(dict, path):
+def dump_json_file(json_dict, path):
 	with open(path, 'w') as f:
-		json.dump(dict, f)
+		json.dump(json_dict, f)
 
 def load_json_file(path):
 	with open(path, 'r') as f:
 		json_dict = json.load(f)
 	return json_dict
 
-def http_get(url):
-	url = "http://"+url
+def https_get(url):
+	url = "https://"+url
 	while(True):
 		try:
 			resp = requests.get(url)
@@ -44,12 +44,21 @@ def http_get(url):
 
 def write_final_tsv(out, mode, hits):
 	with open (out+'.tsv', mode, newline="\n") as tsvfile:
-		colnames = ['qid','pident','hits','geneid','symbol','des','keggid','keggko','keggmap','mesh']
+		colnames = ['qid','pident','hits',
+					'geneid','symbol','des',
+					'keggid','keggko','keggmap','mesh',
+					'logFC', 'logCPM', 'PValue', 'FDR'
+					]
+		for subj in hits.values():
+			for col in subj.keys():
+				if col not in colnames:
+					colnames.append(col)
+			break
 		writer = csv.DictWriter(tsvfile, fieldnames=colnames, delimiter='\t')
 		writer.writeheader()
 		for qid, subj in hits.items():
-				subj['qid'] = qid
-				writer.writerow(subj)
+			subj['qid'] = qid
+			writer.writerow(subj)
 
 if __name__ == '__main__':
 	print_logo('0.1.0')

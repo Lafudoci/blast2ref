@@ -88,7 +88,7 @@ def acc2ref():
 		# Enrich hits dict with kegg
 		kegg_mapper.mapper(out_n_db_name)
 		# Represent all qid
-		deseq_represent.represent(out_n_db_name)
+		deseq_represent.represent(argp.output_prefix, argp.blast_db)
 
 		return True
 	else:
