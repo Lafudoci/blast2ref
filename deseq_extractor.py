@@ -10,6 +10,13 @@ import configparser
 config = configparser.ConfigParser()
 config.read('config.ini')
 
+max_pvalue = 0.0
+max_fdr = 0.0
+min_logcpm = 0.0
+abs_min_logfc = 0.0
+de_level = ''
+
+
 def read_trinity_fasta(fasta_path):
 	trinity_fasta = {}
 	logger.info('Loading '+ str(fasta_path))
@@ -71,12 +78,10 @@ def read_de_edger(de_file):
 	global de_level
 	for de in de_dict:
 		sid = de.split('_')
-		if de_level == 'gene' and sid[-1].startswith('i'):
-			logger.warning('Isoform id was detected, DE level should be isoform. Overwritted config.')
+		if sid[-1].startswith('i'):
 			de_level = 'isoform'
 			break
-		if de_level == 'isoform' and sid[-1].startswith('g'):
-			logger.warning('Gene id was detected, DE level should be gene. Overwritted config.')
+		if sid[-1].startswith('g'):
 			de_level = 'gene'
 			break
 
@@ -149,12 +154,10 @@ def deseq_extractor(fasta_path, fasta_source, de_profile, de_file, fasta_output_
 	# read DE results
 	if de_profile == 'edger':
 		logger.info('DE profile: edgeR')
-		global de_level
 		global max_pvalue
 		global max_fdr
 		global min_logcpm
 		global abs_min_logfc
-		de_level = config['edgeR_PROFILE']['DE_Level'].lower()
 		max_pvalue = float(config['edgeR_PROFILE']['MAX_PValue'])
 		max_fdr = float(config['edgeR_PROFILE']['MAX_FDR'])
 		min_logcpm = float(config['edgeR_PROFILE']['MIN_logCPM'])

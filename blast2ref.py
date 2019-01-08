@@ -4,6 +4,7 @@ import eutility
 import kegg_mapper
 import lable_crawler
 import utils
+import plotting
 
 import argparse
 import os
@@ -34,6 +35,7 @@ config = configparser.ConfigParser()
 config.read('config.ini')
 
 max_target_seqs = config['BLAST_PARAMETERS']['MAX_TARGET_SEQS']
+evalue = config['BLAST_PARAMETERS']['E_VALUE']
 
 def deseq_ex():
 	if argp.fasta_file and argp.de_result and argp.de_profile and argp.output_prefix:
@@ -47,11 +49,11 @@ def deseq_ex():
 		logger.warning('Error, lack of necessary args.')
 
 def run_blast():
-	py = r"blast_batch_helper\blast_batch_helper.py"
+	py = sys.path[0] + "\\blast_batch_helper\\blast_batch_helper.py"
 	query_string = argp.output_prefix+'_filtered.fasta'
 	if os.path.exists(query_string):
 		out_string = argp.output_prefix +'_' + argp.blast_db + '_filtered.fmt6'
-		others_string = '-task blastx-fast -max_target_seqs %s -evalue 1e-3 -remote'% max_target_seqs
+		others_string = '-task blastx-fast -max_target_seqs %s -evalue %s -remote'% (max_target_seqs, evalue)
 		cmd = ["blastx", "-db", argp.blast_db, "-query", query_string, "-out", out_string, "-others", others_string]
 		subprocess.run([sys.executable, py] + cmd)
 		if os.path.exists(out_string):
@@ -84,20 +86,27 @@ def acc2ref():
 		else:
 			logger.warning('Unknow file format.')
 		# Enrich hits dict with mesh
-		lable_crawler.hits_enrich(hits_dict, 500, out_n_db_name)
+		mesh = lable_crawler.hits_enrich(hits_dict, 500, out_n_db_name)
 		# Enrich hits dict with kegg
-		kegg_mapper.mapper(out_n_db_name)
+		ko = kegg_mapper.mapper(out_n_db_name)
 		# Represent all qid
-		deseq_represent.represent(argp.output_prefix, argp.blast_db)
+		represent = deseq_represent.represent(argp.output_prefix, argp.blast_db)
 
-		return True
+		return mesh and ko and represent
 	else:
 		logger.warning('Error, lack of necessary args.')
+
+def results_plotting():
+	out_n_db_name = argp.output_prefix +'_'+ argp.blast_db
+	# plot kegg color maps
+	keggmap = plotting.kegg_map_coloring(out_n_db_name)
+
+	return keggmap
 
 def default():
 	if argp.fasta_file and argp.de_profile and argp.output_prefix:
 		# Read blast result to hits dict
-		if deseq_ex() and run_blast() and acc2ref():
+		if deseq_ex() and run_blast() and acc2ref() and results_plotting():
 			return True
 	else:
 		logger.warning('Error, lack of necessary args.')

@@ -84,7 +84,7 @@ def represent(prefix, db_name):
 		else:
 			logger.warning('Can not recognize DE level.')
 			de_level = ''
-			break
+			return False
 
 	# if de level is gene then represent again, and append DEG data.
 	if de_level == 'gene':
@@ -93,8 +93,12 @@ def represent(prefix, db_name):
 		represent_deg = append_deg(prefix, represent_gene, de_dict)
 		utils.dump_json_file(represent_deg, out+'_represent_gene.cache')
 		utils.write_final_tsv(out+'_represent_gene', 'w', represent_deg)
+		return True
 	elif de_level == 'isoform':
-		utils.write_final_tsv(out+'_represent_isoform', 'w', represent_iso)
+		represent_deg = append_deg(prefix, represent_iso, de_dict)
+		utils.dump_json_file(represent_deg, out+'_represent_isoform.cache')
+		utils.write_final_tsv(out+'_represent_isoform', 'w', represent_deg)
+		return True
 	else:
 		logger.warning('Can not recognize DE level.')
 

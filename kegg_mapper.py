@@ -72,8 +72,7 @@ def kegg_map_api(ko):
 			if path_id.startswith('ko'):
 				pathway_list.append(path_id)
 	else:
-		kegg = ''
-	print(pathway_list)
+		pathway_list = ''
 	return pathway_list
 
 def gene2kegg(gene_id):
@@ -158,6 +157,8 @@ def mapper(name_prefix):
 			hits_ko[qid][acc] = {**hits[qid][acc] , **gene_dict[acc]['gene']}
 
 	lable_crawler.write_tsv(name_prefix+'_enrich_kogene','w',hits_ko)
+
+	return True
 
 if __name__ == '__main__':
 	# mapper('blast2ref_diff_fasta_cluster2_nr')
