@@ -78,9 +78,9 @@ def hits_enrich(hits, cache_interval, out):
 					hits[qid][acc]['status'] = record.resp
 					if qid not in cache:
 						cache[qid] = {}
-					else:
-						cache[qid][acc] = hits[qid][acc]
+					cache[qid][acc] = hits[qid][acc]
 					id_tmp[acc] = qid
+					i+=1
 				else:
 					logger.info('Found %s from %s'%(acc,id_tmp[acc]))
 					hits[qid][acc]['uid'] = hits[id_tmp[acc]][acc].get('uid',[])
@@ -96,13 +96,11 @@ def hits_enrich(hits, cache_interval, out):
 					hits[qid][acc]['status'] = hits[id_tmp[acc]][acc].get('status','')
 					if qid not in cache:
 						cache[qid] = {}
-					else:
-						cache[qid][acc] = hits[qid][acc]
+					cache[qid][acc] = hits[qid][acc]
 
 				if i == cache_interval:
 					hits2cache(cache, out)
 					i = 1
-				i+=1
 
 	hits2cache(cache, out)
 	write_tsv(out+'_enrich', 'w', hits)
