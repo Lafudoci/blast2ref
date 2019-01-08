@@ -50,20 +50,17 @@ def read_fmt6(path, start_qid=''):
 def hits_enrich(hits, cache_interval, out):
 	# load cache
 	cache = chache2hits(out)
-	if cache:
-		hits = cache
 
-	# logger.debug(hits)
 	i = 1
-	id_cache = {}
+	id_tmp = {}
 	for qid, accs in hits.items():
 		for acc, value in accs.items():
-			# check if hit was already enriched (from cache).
-			if value.get('status'):
-				id_cache[acc] = qid
-				logger.debug('%s, %s was found in cache, skipping.'%(qid, acc))
+			if cache and cache.get(qid,{}).get(acc) and cache[qid][acc].get('status'):
+				logger.debug('%s, %s already in cache.'% (qid,acc))
+				hits[qid][acc] = cache[qid][acc]
+				id_tmp[acc] = qid
 			else:
-				if acc not in id_cache.keys():
+				if acc not in id_tmp:
 					r_acc = acc.split('.')[0]	# There is no version in record dict
 					logger.info('Enriching '+ qid +' '+ acc)
 					uids = eutility.acc2uid(acc) 
@@ -79,28 +76,38 @@ def hits_enrich(hits, cache_interval, out):
 					hits[qid][acc]['mesh_all'] = record.mesh.get('all',[])
 					hits[qid][acc]['mesh_detail'] = record.mesh.get('detail',{})
 					hits[qid][acc]['status'] = record.resp
-					id_cache[acc] = qid
+					if qid not in cache:
+						cache[qid] = {}
+					else:
+						cache[qid][acc] = hits[qid][acc]
+					id_tmp[acc] = qid
 				else:
-					logger.info('Found acc previous results from '+ id_cache[acc])
-					hits[qid][acc]['uid'] = hits[id_cache[acc]][acc].get('uid',[])
-					hits[qid][acc]['title'] = hits[id_cache[acc]][acc].get('title','')
-					hits[qid][acc]['gi'] = hits[id_cache[acc]][acc].get('gi','')
-					hits[qid][acc]['tax_id'] = hits[id_cache[acc]][acc].get('tax_id','')
-					hits[qid][acc]['tax_name'] = hits[id_cache[acc]][acc].get('tax_name','')
-					hits[qid][acc]['lineage'] = hits[id_cache[acc]][acc].get('lineage','')
-					hits[qid][acc]['pubmed'] = hits[id_cache[acc]][acc].get('pubmed',[])
-					hits[qid][acc]['mesh_major'] = hits[id_cache[acc]][acc].get('mesh_major',[])
-					hits[qid][acc]['mesh_all'] = hits[id_cache[acc]][acc].get('mesh_all',[])
-					hits[qid][acc]['mesh_detail'] = hits[id_cache[acc]][acc].get('mesh_detail',{})
-					hits[qid][acc]['status'] = hits[id_cache[acc]][acc].get('status','')
+					logger.info('Found %s from %s'%(acc,id_tmp[acc]))
+					hits[qid][acc]['uid'] = hits[id_tmp[acc]][acc].get('uid',[])
+					hits[qid][acc]['title'] = hits[id_tmp[acc]][acc].get('title','')
+					hits[qid][acc]['gi'] = hits[id_tmp[acc]][acc].get('gi','')
+					hits[qid][acc]['tax_id'] = hits[id_tmp[acc]][acc].get('tax_id','')
+					hits[qid][acc]['tax_name'] = hits[id_tmp[acc]][acc].get('tax_name','')
+					hits[qid][acc]['lineage'] = hits[id_tmp[acc]][acc].get('lineage','')
+					hits[qid][acc]['pubmed'] = hits[id_tmp[acc]][acc].get('pubmed',[])
+					hits[qid][acc]['mesh_major'] = hits[id_tmp[acc]][acc].get('mesh_major',[])
+					hits[qid][acc]['mesh_all'] = hits[id_tmp[acc]][acc].get('mesh_all',[])
+					hits[qid][acc]['mesh_detail'] = hits[id_tmp[acc]][acc].get('mesh_detail',{})
+					hits[qid][acc]['status'] = hits[id_tmp[acc]][acc].get('status','')
+					if qid not in cache:
+						cache[qid] = {}
+					else:
+						cache[qid][acc] = hits[qid][acc]
+
 				if i == cache_interval:
-					hits2cache(hits, out)
+					hits2cache(cache, out)
 					i = 1
 				i+=1
 
-	hits2cache(hits, out)
+	hits2cache(cache, out)
 	write_tsv(out+'_enrich', 'w', hits)
-	# return hits
+
+	return True
 
 def chache2hits(out):
 	cache = {}
@@ -108,10 +115,9 @@ def chache2hits(out):
 		with open(out+'_enrich.cache', 'r') as f:
 			cache = json.load(f)
 		logger.debug('Hits cache exists. Continuing previous job.')
-		return cache
 	except FileNotFoundError:
 		logger.debug('Hits cache not found. Creating new job.')
-		return False
+	return cache
 	
 
 def hits2cache(hits, out):
@@ -144,5 +150,5 @@ def write_tsv(out, mode, hits):
 				writer.writerow(row_dict)
 
 if __name__ == '__main__':
-	hits_dict = read_fmt6('blast2ref_test10_nr_filtered.fmt6')
-	enrich_hits_dict = hits_enrich(hits_dict, 2, 'blast2ref_test10_nr')
+	hits_dict = read_fmt6('blast2ref_test10_swissprot_filtered.fmt6')
+	enrich_hits_dict = hits_enrich(hits_dict, 10, 'blast2ref_test10_swissprot')
