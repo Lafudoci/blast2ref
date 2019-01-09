@@ -391,10 +391,10 @@ def uid2record(acc, uids):
 
 def acc2uid(acc):
 	api = EutilsAPI()
-	resp = api.search('protein', acc)
-	if resp.status_code == 200:
-		i = 0
-		while(True):
+	i = 0
+	while(True):
+		resp = api.search('protein', acc)
+		if resp.status_code == 200:
 			uids = json.loads(resp.text)['esearchresult'].get('idlist', '')
 			# logger.debug(uids)
 			if uids != '':
@@ -407,8 +407,11 @@ def acc2uid(acc):
 				logger.warning('UID not found. Retrying...')
 				time.sleep(5)
 				i += 1
-	else:
-		uids = ['0']
+		else:
+			logger.warning('EutilsAPI resp code:%s. Retrying...'%resp.status_code)
+			i += 1
+			break
+		
 	return uids
 
 def acclink_pubmed(accs):
@@ -536,7 +539,7 @@ def name2gene(name_string):
 
 
 if __name__ == '__main__':
-	acc = 'XP_025759116.1'
+	acc = 'XKK_014022687.1'
 	uids = acc2uid(acc)
 	record = uid2record(acc, uids)
 	logger.info('source: ' + str(record.source))
