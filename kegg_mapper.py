@@ -46,40 +46,55 @@ def kegg_id_api(operation, identifer):
 	if operation == 'conv':
 		api_url = 'rest.kegg.jp/conv/genes/'
 		query_url = 'ncbi-geneid:'+ str(identifer)
+	elif operation == 'conv_uniprot':
+		api_url = 'rest.kegg.jp/conv/genes/'
+		query_url = 'up:'+ str(identifer)
 	elif operation == 'ko':
 		api_url = 'rest.kegg.jp/link/ko/'
 		query_url = str(identifer)
 	else:
 		logger.warning('operation'+operation+'not found.')
 	
-	resp = utils.https_get(api_url+query_url)
+	kegg_list = []
+	resp = utils.http_get(api_url+query_url, https=False)
 	if resp.text.startswith(query_url):
-		kegg = resp.text.split('\t')[1].strip()
-	else:
-		kegg = ''
-	return kegg
+		keggs = resp.text.strip().split('\n')
+		for kegg in keggs:
+			kegg_list.append(kegg.split('\t')[1])
+	return kegg_list
 
-def kegg_map_api(ko):
-	if len(ko) == 0:
+def kegg_map_api(ko_list):
+	if len(ko_list) == 0:
 		return []
 	pathway_list = []
 	api_url = 'rest.kegg.jp/link/pathway/'
-	query_url = str(ko)
-	resp = utils.https_get(api_url+query_url)
-	if resp.text.startswith(query_url):
-		for line in resp.text.splitlines():
-			path_id = line.split('\tpath:')[1].strip()
-			if path_id.startswith('ko'):
-				pathway_list.append(path_id)
-	else:
-		pathway_list = ''
+	for ko in ko_list:
+		resp = utils.http_get(api_url+ko, https=False)
+		if resp.text.startswith(ko):
+			for line in resp.text.splitlines():
+				path_id = line.split('\tpath:')[1].strip()
+				if path_id.startswith('ko'):
+					pathway_list.append(path_id)
+		else:
+			pathway_list = []
 	return pathway_list
 
-def gene2kegg(gene_id):
+def gene2kegg(gene_id, db_type):
 	kegg = {}
-	kegg_id = kegg_id_api('conv', gene_id)
-	kegg['keggid'] = kegg_id
-	kegg_ko = kegg_id_api('ko', kegg_id)
+	if db_type == 'geneid':
+		kegg_id = kegg_id_api('conv', gene_id)
+	elif db_type == 'uniprot':
+		kegg_id = kegg_id_api('conv_uniprot', gene_id)
+	else:
+		logger.warning('Uknown db_type.')
+		return kegg
+	
+	if len(kegg_id) > 0:
+		kegg['keggid'] = kegg_id[0]
+	else:
+		kegg['keggid'] = []
+	
+	kegg_ko = kegg_id_api('ko', kegg['keggid'])
 	kegg['keggko'] = kegg_ko
 	kegg_pathway = kegg_map_api(kegg_ko)
 	kegg['keggmap'] = kegg_pathway
@@ -120,7 +135,7 @@ def mapper(name_prefix):
 				if acc not in acc_gene.keys():
 					if values['origin'] not in query_history.keys():
 						gene_info = eutility.name2gene(values['origin'])
-						kegg_info = gene2kegg(gene_info.get('geneid', ''))
+						kegg_info = gene2kegg(gene_info.get('geneid', ''), 'geneid')
 						query_history[values['origin']] = [gene_info, kegg_info]
 					else:
 						logger.debug('Name was already Searched.')
@@ -163,6 +178,12 @@ def mapper(name_prefix):
 if __name__ == '__main__':
 	# mapper('blast2ref_diff_fasta_cluster2_nr')
 
-	name = name_clean('RecName: Full=Hemoglobin subunit beta 2; AltName: Full=Beta-2-globin; AltName: Full=Hemoglobin beta-2 chain')
+	name = name_clean('peptidyl glycine alpha amidating monooxygenase')
 	gene_info = eutility.name2gene(name)
 	print(gene_info)
+	kegg = gene2kegg(gene_info['geneid'], 'geneid')
+	print(kegg)
+
+	# kegg_id = kegg_id_api('conv_uniprot','P0CG67')
+	# kegg_ko = kegg_id_api('ko', kegg_id)
+	# print(kegg_id, kegg_ko)

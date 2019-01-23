@@ -29,8 +29,11 @@ def load_json_file(path):
 		json_dict = json.load(f)
 	return json_dict
 
-def https_get(url):
-	url = "https://"+url
+def http_get(url, https=False):
+	if https:
+		url = "https://"+url
+	else:
+		url = "http://"+url
 	while(True):
 		try:
 			resp = requests.get(url)

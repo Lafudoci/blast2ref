@@ -29,23 +29,25 @@ def kegg_map_coloring(name_prefix):
 		# build map2ko dict
 		for deg in deg_json.values():
 			if deg.get('keggko'):
-				ko = deg['keggko'].split(':')[1]
-				for kmap in deg['keggmap']:
-					if kmap not in map2ko:
-						map2ko[kmap] = [ko]
-					else:
-						if ko not in map2ko[kmap]:
-							map2ko[kmap].append(ko)
+				for keggko in deg['keggko']:
+					ko = keggko.split(':')[1]
+					for kmap in deg['keggmap']:
+						if kmap not in map2ko:
+							map2ko[kmap] = [ko]
+						else:
+							if ko not in map2ko[kmap]:
+								map2ko[kmap].append(ko)
 		
 		# build ko2color dict
 		for deg in deg_json.values():
 			if deg.get('keggko'):
-				ko = deg['keggko'].split(':')[1]
-				if ko not in ko2color:
-					ko2color[ko] = [deg['hits'], deg['logFC']]
-				else:
-					if deg['hits'] > ko2color[ko][0]:
+				for keggko in deg['keggko']:
+					ko = keggko.split(':')[1]
+					if ko not in ko2color:
 						ko2color[ko] = [deg['hits'], deg['logFC']]
+					else:
+						if deg['hits'] > ko2color[ko][0]:
+							ko2color[ko] = [deg['hits'], deg['logFC']]
 		for ko, fcs in ko2color.items():
 			ko2color[ko] = de_color_mapping(fcs[1])
 
@@ -65,7 +67,7 @@ def de_color_mapping(fold_change):
 
 def kegg_weblink_pathway(path, dataset_string):
 	url = 'www.kegg.jp/kegg-bin/show_pathway?' + dataset_string
-	resp = utils.https_get(url)
+	resp = utils.http_get(url, https=True)
 	for line in resp.text.split("\n"):
 		if line.startswith("<img src=\"/tmp/mark_pathway"):
 			print(line)
@@ -73,11 +75,11 @@ def kegg_weblink_pathway(path, dataset_string):
 			img_name = img_url.split("/")[-1]
 			break
 
-	img_data = utils.https_get(img_url).content
+	img_data = utils.http_get(img_url, https=True).content
 	with open(path+'\\'+img_name, 'wb') as handler:
 		handler.write(img_data)
 
 
 if __name__ == '__main__':
-	kegg_map_coloring('blast2ref_diff_fasta_cluster2_nr')
-	# kegg_map_coloring('blast2ref_test10_swissprot')
+	# kegg_map_coloring('blast2ref_diff_fasta_cluster2_nr')
+	kegg_map_coloring('blast2ref_test10_swissprot')
