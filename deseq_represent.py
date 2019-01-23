@@ -160,7 +160,8 @@ def iso2gene_represent(represent_iso):
 def append_deg(prefix, represent_dict, de_dict):
 	represent_deg = {}
 	for qid, represent in represent_dict.items():
-		represent_deg[qid] = {**represent_dict[qid], **de_dict[qid]}
+		if qid in de_dict:
+			represent_deg[qid] = {**represent_dict[qid], **de_dict[qid]}
 	return represent_deg
 
 
