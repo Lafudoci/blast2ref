@@ -29,6 +29,9 @@ def kegg_map_coloring(name_prefix):
 		# build map2ko dict
 		for deg in deg_json.values():
 			if deg.get('keggko'):
+				# workaround
+				if type(deg['keggko']) is not list:
+					deg['keggko'] = [deg['keggko']]
 				for keggko in deg['keggko']:
 					ko = keggko.split(':')[1]
 					for kmap in deg['keggmap']:
@@ -37,7 +40,6 @@ def kegg_map_coloring(name_prefix):
 						else:
 							if ko not in map2ko[kmap]:
 								map2ko[kmap].append(ko)
-		
 		# build ko2color dict
 		for deg in deg_json.values():
 			if deg.get('keggko'):
