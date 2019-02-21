@@ -28,6 +28,7 @@ argparse.add_argument('-de','--de_result', help="Path to differ expression resul
 argparse.add_argument('-dp','--de_profile', help="Profile of differ expression result output.")
 argparse.add_argument('-c','--cache_file', help="Prefix of Blast2Ref .cache file.")
 argparse.add_argument('-out','--output_prefix', help="Prefix of Blast2Ref results output.")
+argparse.add_argument('-kegg_color_rev', help="Revert KEGG MAP DE color.", action='store_true', default = False)
 argp = argparse.parse_args()
 
 import configparser
@@ -99,7 +100,7 @@ def acc2ref():
 def results_plotting():
 	out_n_db_name = argp.output_prefix +'_'+ argp.blast_db
 	# plot kegg color maps
-	keggmap = plotting.kegg_map_coloring(out_n_db_name)
+	keggmap = plotting.kegg_map_coloring(out_n_db_name, argp.kegg_color_rev)
 
 	return keggmap
 
