@@ -48,8 +48,8 @@ def http_get(url, https=False):
 def write_final_tsv(out, mode, hits):
 	with open (out+'.tsv', mode, newline="\n") as tsvfile:
 		colnames = ['qid','pident','hits',
-					'geneid','symbol','des',
-					'keggid','keggko','keggmap','mesh',
+					'geneid','symbol','des','ref','mesh',
+					'keggid','keggko','keggmap',
 					'logFC', 'logCPM', 'PValue', 'FDR'
 					]
 		for subj in hits.values():

@@ -26,6 +26,7 @@ def represent(prefix, db_name):
 	for qid, hit in enriched_hits.items():
 		idents = []
 		pubmed_all = []
+		ref_all = {}
 		mesh_all = []
 		geneid_all = []
 		for acc, values in hit.items():
@@ -41,6 +42,10 @@ def represent(prefix, db_name):
 				# collect pubmed & mesh terms
 				if len(values['pubmed']) > 0:
 					pubmed_all += values['pubmed']
+				if len(values['mesh_detail']) > 0:
+					for pmid, ref in values['mesh_detail'].items():
+						if 'TI' in ref and 'AB' in ref:
+							ref_all[pmid] = {'TI':ref['TI'],'AB':ref['AB']}
 				if len(values['mesh_all']) > 0:
 					mesh_all += values['mesh_all']
 				# collect geneid & kegg info
@@ -51,6 +56,12 @@ def represent(prefix, db_name):
 		# build final qid list
 		represent_iso[qid] = {}
 
+		# decide final geneid by the highest numbers of occurrence
+		top_geneid = ''
+		if len(geneid_all)>0:
+			top_geneid = max(set(geneid_all), key=geneid_all.count)
+		represent_iso[qid] = {**represent_iso[qid], **gene_dict.get(top_geneid, {})}
+
 		# identity
 		if len(idents)>0:
 			represent_iso[qid]['pident'] = sum(idents)/len(idents)
@@ -58,15 +69,13 @@ def represent(prefix, db_name):
 		else:
 			represent_iso[qid]['pident'] = 0
 			represent_iso[qid]['hits'] = 0
-		# geneid
-		top_geneid = ''
-		if len(geneid_all)>0:
-			top_geneid = max(set(geneid_all), key=geneid_all.count)
-		represent_iso[qid] = {**represent_iso[qid], **gene_dict.get(top_geneid, {})}
 
 		# mesh
 		counts_dict = mesh_counter(mesh_all)
 		represent_iso[qid]['mesh'] = counts_dict
+
+		# ref title and abstract
+		represent_iso[qid]['ref'] = ref_all
 
 	utils.dump_json_file(represent_iso, out+'_represent_isoform.cache')
 
@@ -198,5 +207,5 @@ def mesh_counter(mesh_lists):
 		
 
 if __name__ == '__main__':
-	represent('blast2ref_diff_fasta_cluster2', 'nr')
+	represent('blast2ref_test10', 'swissprot')
 	
