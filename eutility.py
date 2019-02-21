@@ -362,10 +362,17 @@ def mesh_collect(sr):
 
 					# build detail dict of pmid-MH
 					if detail_dict.get(pmid, '') == '':
-						detail_dict[pmid] = []
-						detail_dict[pmid].append(value)
+						detail_dict[pmid] = {'MH':[]}
+						detail_dict[pmid]['MH'].append(value)
 					else:
-						detail_dict[pmid].append(value)
+						detail_dict[pmid]['MH'].append(value)
+
+			# Add title and abstract in detail dict
+			if ('TI' in md_dict and 'AB' in md_dict):
+				if detail_dict.get(pmid, '') == '':
+						detail_dict[pmid] = {}
+				detail_dict[pmid]['TI'] = md_dict['TI']
+				detail_dict[pmid]['AB'] = md_dict['AB']
 
 	if len(MH_set_major)==0:
 		MH_set_major = ''
@@ -539,7 +546,7 @@ def name2gene(name_string):
 
 
 if __name__ == '__main__':
-	acc = 'XKK_014022687.1'
+	acc = 'P0CG67.1'
 	uids = acc2uid(acc)
 	record = uid2record(acc, uids)
 	logger.info('source: ' + str(record.source))
