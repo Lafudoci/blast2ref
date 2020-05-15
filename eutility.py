@@ -36,7 +36,7 @@ class EutilsAPI:
 				time.sleep(0.1)
 			try:
 				last_call_time = time.time()
-				resp = requests.get(url=url)
+				resp = requests.get(url=url, timeout=60)
 				if (resp.status_code == 200) or (i > 5):
 					return resp
 				elif resp.status_code == 400:

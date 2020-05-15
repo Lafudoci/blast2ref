@@ -36,7 +36,7 @@ def http_get(url, https=False):
 		url = "http://"+url
 	while(True):
 		try:
-			resp = requests.get(url)
+			resp = requests.get(url, timeout=60)
 			if resp.status_code == 200:
 				return resp
 			else:
