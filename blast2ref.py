@@ -33,9 +33,13 @@ argparse.add_argument('-out','--output_prefix', help="Prefix of Blast2Ref result
 argparse.add_argument('-kegg_color_rev', help="Revert KEGG MAP DE color.", action='store_true', default = False)
 argp = argparse.parse_args()
 
+base_path = os.getcwd()
+config_path = os.path.join(base_path, 'config.ini')
+blast_helper_path = os.path.join(base_path, 'blast_batch_helper', 'blast_batch_helper.py')
+
 import configparser
 config = configparser.ConfigParser()
-config.read('config.ini')
+config.read(config_path)
 
 max_target_seqs = config['BLAST_PARAMETERS']['MAX_TARGET_SEQS']
 evalue = config['BLAST_PARAMETERS']['E_VALUE']
@@ -52,7 +56,6 @@ def deseq_ex():
 		logger.warning('Error, lack of necessary args.')
 
 def run_blast():
-	py = sys.path[0] + "\\blast_batch_helper\\blast_batch_helper.py"
 	query_string = argp.output_prefix+'_filtered.fasta'
 	if os.path.exists(query_string):
 		out_string = argp.output_prefix +'_' + argp.blast_db + '_filtered.fmt6'
@@ -64,7 +67,7 @@ def run_blast():
 		cmd = ["blastx", "-db", argp.blast_db, "-query", query_string, "-out", out_string, "-others", others_string]
 		if argp.gnu_option == True:
 			cmd += ["-gnu_parallel"]
-		subprocess.run([sys.executable, py] + cmd)
+		subprocess.run([sys.executable, blast_helper_path] + cmd)
 		if os.path.exists(out_string):
 			logger.info('BLAST job was finished.')
 			return True
