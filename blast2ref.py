@@ -24,6 +24,8 @@ argparse.add_argument('-fs','--fasta_source', help="The source of fasta file.", 
 # argparse.add_argument('-br','--blast_result', help="Path to BLAST+ result output.")
 argparse.add_argument('-bf','--blast_format', help="Format of BLAST+ output.", default = 'fmt6')
 argparse.add_argument('-db','--blast_db', help="Database option for BLAST+", default = 'nr')
+argparse.add_argument('-cpu','--cpu_option', help="CPU option for BLAST+, default remote or provide a num for num_threads of local computing", default = 'remote')
+argparse.add_argument('-gnu','--gnu_option', help="Enable GNU parallel for BLAST+", action='store_true', default = False)
 argparse.add_argument('-de','--de_result', help="Path to differ expression result output.")
 argparse.add_argument('-dp','--de_profile', help="Profile of differ expression result output.")
 argparse.add_argument('-c','--cache_file', help="Prefix of Blast2Ref .cache file.")
@@ -54,8 +56,14 @@ def run_blast():
 	query_string = argp.output_prefix+'_filtered.fasta'
 	if os.path.exists(query_string):
 		out_string = argp.output_prefix +'_' + argp.blast_db + '_filtered.fmt6'
-		others_string = '-task blastx-fast -max_target_seqs %s -evalue %s -remote'% (max_target_seqs, evalue)
+		others_string = '-task blastx-fast -max_target_seqs %s -evalue %s '% (max_target_seqs, evalue)
+		if type(argp.cpu_option) == int:
+			others_string += ' -num_threads %d'%argp.cpu_option
+		else:
+			others_string += ' -remote'
 		cmd = ["blastx", "-db", argp.blast_db, "-query", query_string, "-out", out_string, "-others", others_string]
+		if argp.gnu_option == True:
+			cmd += ["-gnu_parallel"]
 		subprocess.run([sys.executable, py] + cmd)
 		if os.path.exists(out_string):
 			logger.info('BLAST job was finished.')
