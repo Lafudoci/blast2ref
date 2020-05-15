@@ -60,8 +60,8 @@ def run_blast():
 	if os.path.exists(query_string):
 		out_string = argp.output_prefix +'_' + argp.blast_db + '_filtered.fmt6'
 		others_string = '-task blastx-fast -max_target_seqs %s -evalue %s '% (max_target_seqs, evalue)
-		if type(argp.cpu_option) == int:
-			others_string += ' -num_threads %d'%argp.cpu_option
+		if argp.cpu_option != 'remote':
+			others_string += ' -num_threads %d'%int(argp.cpu_option)
 		else:
 			others_string += ' -remote'
 		cmd = ["blastx", "-db", argp.blast_db, "-query", query_string, "-out", out_string, "-others", others_string]
