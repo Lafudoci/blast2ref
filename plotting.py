@@ -88,6 +88,7 @@ def kegg_weblink_pathway(path, dataset_string):
 	url = 'www.kegg.jp/kegg-bin/show_pathway?' + dataset_string
 	resp = utils.http_get(url, https=True)
 	for line in resp.text.split("\n"):
+		line = line.strip()
 		if line.startswith("<img src=\"/tmp/mark_pathway"):
 			print(line)
 			img_url = 'www.kegg.jp'+ line.split("\"")[1]
@@ -109,5 +110,7 @@ def test_seaborn():
 
 if __name__ == '__main__':
 	# kegg_map_coloring('blast2ref_diff_fasta_cluster2_nr')
-	kegg_map_coloring('blast2ref_test10_swissprot')
+	# kegg_map_coloring('blast2ref_test10_swissprot')
 	# test_seaborn()
+
+	kegg_weblink_pathway('test_path', r'ko00190/K03968%09%23fec789/K03945%09%23fec27f/K03949%09%23fea94c/K03937%09%23fecb91')
